@@ -1,5 +1,4 @@
-#TARGET ?= pwrcntrl
-TARGET ?= $(WPSLIB)
+TARGET ?= pwrcntrl
 SRC_DIRS ?= .
 
 CC = g++
@@ -25,12 +24,12 @@ LDLIBS += -Llib -lwps
 BASE_LDLIBS += $(shell pkg-config --libs libcurl openssl tidy yaml-cpp) -lpthread
 #LDLIBS += $(shell pkg-config --libs libcurl openssl tidy yaml-cpp) -lSegFault
 
-$(TARGET): $(OBJS) $(WPSLIB)
+$(TARGET): $(OBJS) $(LIB_OBJS)
+	$(CC) $(OBJS) $(LIB_OBJS) -o $@ $(BASE_LDLIBS)
+
+$(TARGET)_dyn: $(OBJS) $(WPSLIB)
 	$(CC) $(OBJS) -o $@ $(LDLIBS)
 #	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LOADLIBES) $(LDLIBS)
-
-$(TARGET)_sl: $(OBJS) $(LIB_OBJS)
-	$(CC) $(OBJS) $(LIB_OBJS) -o $@ $(BASE_LDLIBS)
 
 #	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
 
