@@ -2,6 +2,8 @@
 
 #include <arpa/inet.h>
 #include <dirent.h>
+#include <future>
+#include <algorithm>
 #include <fstream>
 #include <fcntl.h>
 #include <ifaddrs.h>
@@ -12,9 +14,12 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef kda_COMMENTED_OUT
 #include "threadbundle.h"
+#endif /* kda_COMMENTED_OUT */
 
 
+// Add fields for username and password
 const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERS = "controllers";
 const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERBYNAME = "controller_by_name";
 const char* WebPowerSwitchManager::CACHE_CONTROLLERBYNAME_KEY_HOST = "host";
@@ -305,13 +310,16 @@ void WebPowerSwitchManager::findSwitches() {
 
   unsigned long firstIp = ntohl(ipaddress.s_addr & subnetmask.s_addr);
   unsigned long lastIp = ntohl(ipaddress.s_addr | ~(subnetmask.s_addr));
+  std::vector<std::future<bool>> threads;
   std::vector<std::unique_ptr<WebPowerSwitch>> switches;
   //std::vector<std::thread> threads;
+#ifdef kda_COMMENTED_OUT
   ThreadBundle tb;
   tb.setMaxThreads(10);
   if (verbose_) {
     std::cout << "std::thread::hardware_concurrency: " << std::thread::hardware_concurrency() << std::endl;
   }
+#endif /* kda_COMMENTED_OUT */
   for (auto ip = firstIp; ip <= lastIp; ip++) {
     struct in_addr testIp = { htonl(ip) };
     std::cout << "ip: " << ip << " - " << htonl(ip) << " - " << inet_ntoa(testIp) << std::endl;
@@ -323,12 +331,23 @@ void WebPowerSwitchManager::findSwitches() {
       } else {
         wps->suppressDetectionErrors();
       }
+      threads.push_back(std::async(&WebPowerSwitch::login, wps.get(), up.username, up.password));
+#ifdef kda_COMMENTED_OUT
       tb.add(&WebPowerSwitch::login, wps.get(), up.username, up.password);
+#endif /* kda_COMMENTED_OUT */
       switches.push_back(std::move(wps));
     }
   }
 
+#ifdef kda_COMMENTED_OUT
   tb.join();
+#endif /* kda_COMMENTED_OUT */
+  std::for_each(threads.begin(), threads.end(), [](std::future<bool>& fut){fut.get();});
+#ifdef kda_COMMENTED_OUT
+  for (auto t : threads) {
+    t.get();
+  }
+#endif /* kda_COMMENTED_OUT */
   //std::cout << "threads done" << std::endl;
 
   // parse the successes
