@@ -65,12 +65,15 @@ int main(int iArgc, char* szArgv[]) {
       }
     }
   }
-  //wpsm->verbose();
-#ifdef kda_COMMENTED_OUT
-  if (strncasecmp(command.c_str(), "reset", 5) == 0) {
+
+  // Verbosity
+  if (optionsResult.count("verbose") != 0) {
+    wpsm->verbose(optionsResult.count("verbose"));
+  }
+
+  if (optionsResult.count("reset") != 0) {
     wpsm->resetCache();
   }
-#endif /* kda_COMMENTED_OUT */
 
   //std::cout << "target: -" << target << "-" << std::endl;
 

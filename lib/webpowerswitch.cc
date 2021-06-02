@@ -46,9 +46,6 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
     return true;
   }
 
-  std::unordered_map<std::string, std::string> postFields;
-  postFields["Username"] = username;
-
   // Create Share
   share_ = curl_share_init();
 
@@ -76,6 +73,8 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
   //std::cout << "post-fetch login page" << std::endl;
   if (curlResult != CURLE_OK) {
     if (curlResult == CURLE_OPERATION_TIMEDOUT) {
+      std::cerr << "ERROR: timed out host(): " << host() << std::endl;
+      return false;
     }
     if (!suppressDetectionErrors_) {
       std::cerr << "host(): " << host() << " error (" << curlResult
@@ -98,14 +97,15 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
   }
   result = tidyOptSetInt(tdw, TidyUseCustomTags, TidyCustomBlocklevel);
   if (result == false) {
-    std::cerr << "tidyOptSetInt(tdw, TidyUseCustomTags, TidyCustomBlocklevel) failed: " << result << std::endl;
-    std::cerr << "errbuf: " << errbuf.bp << std::endl;
+    std::cerr << "ERROR: tidyOptSetInt(tdw, TidyUseCustomTags, "
+                 "TidyCustomBlocklevel) failed: "
+              << result << " errbuf: " << errbuf.bp << std::endl;
     return false;
   }
   result = tidyParseString(tdw, os.str().c_str());
   if (result > 1) {
-    std::cerr << "(login) failed to parse: " << result << std::endl;
-    std::cerr << "errbuf: " << errbuf.bp << std::endl;
+    std::cerr << "ERROR: (login) failed to parse: " << result
+              << " errbuf: " << errbuf.bp << std::endl;
     return false;
   }
 
@@ -113,14 +113,14 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
   TidyNode inputNode = tidyHelper::findNodeByAttr(tdw, "input", TidyAttr_NAME, "challenge", nullptr);
   if (inputNode == nullptr) {
     if (!suppressDetectionErrors_) {
-      std::cerr << "host(): " << host() << " failed to find input" << std::endl;
+      std::cerr << "ERROR: host(): " << host() << " failed to find input" << std::endl;
     }
     return false;
   }
   //std::cout << "name: " << tidyNodeGetName(inputNode) << std::endl;
   auto value = tidyAttrGetById(inputNode, TidyAttr_VALUE);
   if (value == nullptr) {
-    std::cerr << "failed to find challenge value" << std::endl;
+    std::cerr << "ERROR: failed to find challenge value" << std::endl;
     return false;
   }
   std::string challenge = tidyAttrValue(value);
@@ -129,12 +129,12 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
   // determine form action
   TidyNode formNode = tidyHelper::findNodeByAttr(tdw, "form", TidyAttr_NAME, "login", nullptr);
   if (formNode == nullptr) {
-    std::cerr << "failed to find form" << std::endl;
+    std::cerr << "ERROR: failed to find form" << std::endl;
     return false;
   }
   value = tidyAttrGetById(formNode, TidyAttr_ACTION);
   if (value == nullptr) {
-    std::cerr << "failed to find action value" << std::endl;
+    std::cerr << "ERROR: failed to find action value" << std::endl;
     return false;
   }
   std::string action = tidyAttrValue(value);
@@ -142,7 +142,7 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
 
   value = tidyAttrGetById(formNode, TidyAttr_METHOD);
   if (value == nullptr) {
-    std::cerr << "failed to find method value" << std::endl;
+    std::cerr << "ERROR: failed to find method value" << std::endl;
     return false;
   }
   //std::string method = tidyAttrValue(value);
@@ -158,6 +158,8 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
     osDigest << std::setfill('0') << std::setw(2) << std::hex << (int)md5digest[i];
   }
   //std::cout << "md5digest: " << osDigest.str() << std::endl;
+  std::unordered_map<std::string, std::string> postFields;
+  postFields["Username"] = username;
   postFields["Password"] = osDigest.str();
 
   // Post processing
@@ -194,6 +196,8 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
   //std::cout << "host(): " << host() << " responseCode:" << responseCode << std::endl;
   if (responseCode == 200) {
     loggedIn_ = true;
+    username_ = username;
+    password_ = password;
   } else {
     if (!suppressDetectionErrors_) {
       std::cout << "host(): " << host() << " responseCode:" << responseCode << std::endl;

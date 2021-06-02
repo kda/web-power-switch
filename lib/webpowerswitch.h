@@ -65,6 +65,12 @@ public:
   std::string host() const {
     return host_;
   }
+  std::string username() const {
+    return username_;
+  }
+  std::string password() const {
+    return password_;
+  }
   std::string name() const {
     if (loggedIn_ == false) {
       return "===not_logged_in===";
@@ -88,6 +94,8 @@ public:
 private:
   std::string prefix_ = {"http://"};
   std::string host_;
+  std::string username_;
+  std::string password_;
   bool loggedIn_ { false };
   CURLSH* share_ { nullptr };
   std::string name_ = {};

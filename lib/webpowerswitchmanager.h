@@ -21,8 +21,8 @@ public:
   WebPowerSwitch* getSwitchByOutletName(std::string name);
   Outlet* getOutletByName(std::string name);
   void dumpSwitches(std::ostream& ostr);
-  void verbose() {
-    verbose_ = true;
+  void verbose(int increment = 1) {
+    verbose_ += increment;
   }
 
 private:
@@ -40,11 +40,13 @@ private:
   static const char* CACHE_KEY_CONTROLLERS;
   static const char* CACHE_KEY_CONTROLLERBYNAME;
   static const char* CACHE_CONTROLLERBYNAME_KEY_HOST;
+  static const char* CACHE_CONTROLLERBYNAME_KEY_USERNAME;
+  static const char* CACHE_CONTROLLERBYNAME_KEY_PASSWORD;
   static const char* CACHE_KEY_OUTLETS;
   static const char* CACHE_OUTLETS_KEY_CONTROLLER;
   static const char* CACHE_OUTLETS_KEY_ID;
   time_t cacheTimeout_ = (60 * 60) * 24;
-  bool verbose_ = false;
+  int verbose_ { 0 };
   int fdWrite_ = -1;
 
   bool isCacheLoaded();
