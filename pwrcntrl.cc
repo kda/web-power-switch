@@ -14,9 +14,9 @@ int main(int iArgc, char* szArgv[]) {
   options
     .allow_unrecognised_options()
     .add_options()
-      ("a,all", "execute command on all outlets (other than 'show' very dangerous)", cxxopts::value<bool>())
-      ("credentials", "provide pairs of username:password to use on switch(es)", cxxopts::value<std::vector<std::string>>())
-      ("command", "[show]|on|off|toggle|cycle: show, turn on, turn off, toggle or cycle outlet", cxxopts::value<std::vector<std::string>>())
+      ("a,all", "show all outlets (even if something other than 'show' is specified).", cxxopts::value<bool>())
+      ("credentials", "provide pairs of username:password to use on switch(es).", cxxopts::value<std::vector<std::string>>())
+      ("command", "[show]|on|off|toggle|cycle: show, turn on, turn off, toggle or cycle outlet.", cxxopts::value<std::vector<std::string>>())
       ("d,discover", "if switch name is not known, then attempt to discover it")
       ("h,host", "name of host (supports IP, as well)")
       ("help", "show help")
@@ -45,23 +45,9 @@ int main(int iArgc, char* szArgv[]) {
   }
   //std::cout << "command: " << command << std::endl;
 
-
-#ifdef kda_COMMENTED_OUT
-  if (iArgc == 1) {
-    std::cout << "Usage: " << szArgv[0] << " (<outlet_name>|<controller_name>|all) [on|off|cycle|toggle|reset]" << std::endl;
-    return -1;
-  }
-
-  std::string target = szArgv[1];
-  std::string command("status");
-  if (iArgc > 2) {
-    command = szArgv[2];
-    // TODO: convert to lowercase
-    // command = command.to_lower();
-  }
-#endif /* kda_COMMENTED_OUT */
-
   std::unique_ptr<WebPowerSwitchManager> wpsm(new WebPowerSwitchManager);
+
+  // Add credentials
   if (optionsResult.count("credentials") != 0) {
     for (const auto& credential : optionsResult["credentials"].as<std::vector<std::string>>()) {
       //std::cout << "credential: " << credential << std::endl;
@@ -88,6 +74,7 @@ int main(int iArgc, char* szArgv[]) {
 
   //std::cout << "target: -" << target << "-" << std::endl;
 
+  // If 'all', then only implement show.
   if (optionsResult.count("all")) {
     if (optionsResult["all"].as<bool>()) {
       wpsm->dumpSwitches(std::cout);
@@ -95,11 +82,6 @@ int main(int iArgc, char* szArgv[]) {
     }
   }
 #ifdef kda_COMMENTED_OUT
-  if (target == std::string("all")) {
-    wpsm->dumpSwitches(std::cout);
-    return 0;
-  }
-
   auto wps = wpsm->getSwitch(target);
   if (wps != nullptr) {
     wps->dumpOutlets(std::cout);

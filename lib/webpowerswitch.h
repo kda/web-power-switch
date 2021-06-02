@@ -88,8 +88,8 @@ public:
 private:
   std::string prefix_ = {"http://"};
   std::string host_;
-  bool loggedIn_ = false;
-  CURLSH* share_ = nullptr;
+  bool loggedIn_ { false };
+  CURLSH* share_ { nullptr };
   std::string name_ = {};
   std::vector<Outlet> outlets_;
   bool suppressDetectionErrors_ = false;

@@ -84,24 +84,4 @@ TidyNode findNodeByContent(TidyDoc tdoc, const std::string& name,
   return nullptr;
 }
 
-#ifdef kda_COMMENTED_OUT
-ctmbstr getHeaderValue(TidyNode node, const std::string& name) {
-  auto nodeName = tidyNodeGetName(node);
-  //std::cout << "nodeName: " << nodeName << std::endl;
-  if (nodeName == nullptr || strncasecmp(nodeName, "head", strlen(nodeName)) != 0) {
-    std::cout << "node is not header" << std::endl;
-    return nullptr;
-  }
-
-  return nullptr;
-}
-
-ctmbstr getHeaderValue(TidyDoc tdoc, const std::string& name) {
-#ifdef kda_COMMENTED_OUT
-  return getHeaderValue(tidyGetHead(tdoc), name);
-#endif /* kda_COMMENTED_OUT */
-  return nullptr;
-}
-#endif /* kda_COMMENTED_OUT */
-
 }

@@ -201,13 +201,6 @@ void WebPowerSwitchManager::loadCache() {
   } catch (...) {
     std::cerr << "failed to load cache: " << cacheFile_ << std::endl;
   }
-#ifdef kda_COMMENTED_OUT
-  try {
-    cache_ = YAML::LoadFile(cacheFile_);
-  } catch (...) {
-    std::cerr << "failed to load cache: " << cacheFile_ << std::endl;
-  }
-#endif /* kda_COMMENTED_OUT */
 }
 
 void WebPowerSwitchManager::writeCacheStart() {
@@ -245,47 +238,6 @@ void WebPowerSwitchManager::writeCacheFinish() {
   close(fdWrite_);
   fdWrite_ = -1;
 }
-
-#ifdef kda_COMMENTED_OUT
-void WebPowerSwitchManager::writeCache() {
-  if (enableCache_ == false) {
-    return;
-  }
-  if (isCacheLoaded() == false) {
-    return;
-  }
-  if (validateCacheFile() == false) {
-    return;
-  }
-
-  std::stringstream ss;
-  ss << cache_;
-  
-  auto fd = open(cacheFile_.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0777);
-  auto r = flock(fd, LOCK_EX | LOCK_NB);
-  if (r < 0) {
-    std::cerr << "failed to obtain write lock: " << cacheFile_ << std::endl;
-    close(fd);
-    return;
-  }
-  auto output = ss.str();
-  if (write(fd, output.c_str(), output.length()) != output.length()) {
-    std::cerr << "failed to write cache: " << cacheFile_ << std::endl;
-  }
-  close(fd);
-#ifdef kda_COMMENTED_OUT
-  std::fstream f(cacheFile_.c_str(), std::ios_base::out | std::ios_base::trunc);
-  if (f.good() == false) {
-    std::cout << "failed to open cache file for writing: " << cacheFile_ << std::endl;
-  } else {
-    f << cache_;
-  }
-  f.close();
-  // ensure all can access and update
-  chmod(cacheFile_.c_str(), 0777);
-#endif /* kda_COMMENTED_OUT */
-}
-#endif /* kda_COMMENTED_OUT */
 
 void WebPowerSwitchManager::findSwitches() {
   if (findSwitches_ == false) {
