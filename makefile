@@ -13,7 +13,7 @@ LIB_OBJS := $(addsuffix .o,$(basename $(LIB_SRCS)))
 WPSLIB := lib/libwps.so
 
 #INC_DIRS := $(shell find $(SRC_DIRS) -type d)
-INC_DIRS := include
+INC_DIRS := lib
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 #CPPFLAGS ?= $(INC_FLAGS) -MMD -MP --std=c++17
