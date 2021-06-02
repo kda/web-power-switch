@@ -14,10 +14,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef kda_COMMENTED_OUT
-#include "threadbundle.h"
-#endif /* kda_COMMENTED_OUT */
-
 
 // Add fields for username and password
 const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERS = "controllers";

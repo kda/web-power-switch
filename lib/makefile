@@ -14,13 +14,12 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP --std=c++17 -g1
 CPPFLAGS += -fPIC
 LDFLAGS += -shared
-LDLIBS += $(shell pkg-config --libs libcurl openssl tidy yaml-cpp) -lpthread
+#LDLIBS += $(shell pkg-config --libs libcurl openssl tidy yaml-cpp) -lpthread
+LDLIBS += $(shell pkg-config --libs libcurl openssl tidy yaml-cpp)
 #LDLIBS += $(shell pkg-config --libs libcurl openssl tidy yaml-cpp) -lSegFault
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
-
-#		$(AR) $(ARFLAGS) $@ $(OBJS)
 
 .PHONY: clean
 clean:

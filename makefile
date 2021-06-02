@@ -29,9 +29,6 @@ $(TARGET): $(OBJS) $(LIB_OBJS)
 
 $(TARGET)_dyn: $(OBJS) $(WPSLIB)
 	$(CC) $(OBJS) -o $@ $(LDLIBS)
-#	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LOADLIBES) $(LDLIBS)
-
-#	$(CC) $(LDFLAGS) $(OBJS) -o $@ $(LDLIBS)
 
 $(WPSLIB):  FORCE
 	cd lib && make
