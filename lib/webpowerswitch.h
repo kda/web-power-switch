@@ -56,6 +56,10 @@ public:
   void suppressDetectionErrors() {
     suppressDetectionErrors_ = true;
   }
+  bool connect();
+  bool isConnected() const {
+    return connected_;
+  }
   bool login(std::string username, std::string password);
   void logout();
   bool isLoggedIn() const {
@@ -96,6 +100,7 @@ private:
   std::string host_;
   std::string username_;
   std::string password_;
+  bool connected_ { false };
   bool loggedIn_ { false };
   CURLSH* share_ { nullptr };
   std::string name_ = {};

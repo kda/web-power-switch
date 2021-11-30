@@ -41,8 +41,16 @@ WebPowerSwitch::~WebPowerSwitch() {
   logout();
 }
 
+bool WebPowerSwitch::connect() {
+  if (isConnected()) {
+    return true;
+  }
+
+  return false;
+}
+
 bool WebPowerSwitch::login(std::string username, std::string password) {
-  if (loggedIn_) {
+  if (isLoggedIn()) {
     return true;
   }
 
@@ -211,6 +219,7 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
 }
 
 void WebPowerSwitch::logout() {
+  connected_ = false;
   loggedIn_ = false;
   if (share_ != nullptr) {
     curl_share_cleanup(share_);
@@ -219,7 +228,7 @@ void WebPowerSwitch::logout() {
 }
 
 void WebPowerSwitch::buildOutlets(bool force) {
-  if (loggedIn_ == false) {
+  if (isLoggedIn() == false) {
     std::cerr << "not logged in" << std::endl;
     return;
   }
@@ -376,7 +385,7 @@ bool WebPowerSwitch::toggle(const std::string& outletName) {
 }
 
 bool WebPowerSwitch::setState(const Outlet* outlet, OutletState newState) {
-  if (loggedIn_ == false) {
+  if (isLoggedIn() == false) {
     std::cerr << "not logged in" << std::endl;
     return false;
   }
