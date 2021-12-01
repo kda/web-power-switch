@@ -37,7 +37,7 @@ FORCE:
 
 .PHONY: clean
 clean:
-		$(RM) $(TARGET) $(OBJS) $(DEPS)
+		$(RM) $(TARGET) $(TARGET)_dyn $(OBJS) $(DEPS)
 		cd lib && $(MAKE) clean
 
 -include $(DEPS)
