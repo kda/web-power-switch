@@ -66,7 +66,7 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name) {
   auto iter = mNameToSwitch_.find(name);
   if (iter == mNameToSwitch_.end()) {
     if (!cache_[CACHE_KEY_CONTROLLERBYNAME][name]) {
-      //std::cerr << "unknown switch name: " << name << std::endl;
+      std::cerr << "ERROR: unknown switch name: " << name << std::endl;
       return nullptr;
     }
     auto wps = std::make_unique<WebPowerSwitch>(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
@@ -100,7 +100,7 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name) {
       }
     }
     if (wps->isLoggedIn() == false) {
-      //std::cerr << "login failed switch name: " << name << std::endl;
+      std::cerr << "ERROR: login failed switch name: " << name << std::endl;
       return nullptr;
     }
     mNameToSwitch_[name].reset(wps.release());
@@ -139,7 +139,9 @@ void WebPowerSwitchManager::dumpSwitches(std::ostream& ostr) {
     //std::cout << "controller: " << controller.first.as<std::string>() << std::endl;
     //std::cout << "host: " << cbnCache[controller.first][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>() << std::endl;
     auto wps = getSwitch(controller.first.as<std::string>());
-    wps->dumpOutlets(ostr);
+    if (wps != nullptr) {
+      wps->dumpOutlets(ostr);
+    }
   }
 }
 
