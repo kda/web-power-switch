@@ -2,8 +2,6 @@
 
 #include <arpa/inet.h>
 #include <dirent.h>
-#include <future>
-#include <algorithm>
 #include <fstream>
 #include <fcntl.h>
 #include <ifaddrs.h>
@@ -15,12 +13,9 @@
 #include <unistd.h>
 
 
-// Add fields for username and password
 const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERS = "controllers";
 const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERBYNAME = "controller_by_name";
 const char* WebPowerSwitchManager::CACHE_CONTROLLERBYNAME_KEY_HOST = "host";
-const char* WebPowerSwitchManager::CACHE_CONTROLLERBYNAME_KEY_USERNAME = "username";
-const char* WebPowerSwitchManager::CACHE_CONTROLLERBYNAME_KEY_PASSWORD = "password";
 const char* WebPowerSwitchManager::CACHE_KEY_OUTLETS = "outlets";
 const char* WebPowerSwitchManager::CACHE_OUTLETS_KEY_CONTROLLER = "controller";
 const char* WebPowerSwitchManager::CACHE_OUTLETS_KEY_ID = "id";
@@ -58,9 +53,6 @@ bool WebPowerSwitchManager::load() {
 }
 
 void WebPowerSwitchManager::resetCache() {
-  if (verbose_ > 1) {
-    std::cerr << "INFO: resetCache: isCacheLoaded(): " << isCacheLoaded() << std::endl;
-  }
   if (isCacheLoaded()) {
     cache_.reset();
   }
@@ -74,34 +66,46 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name) {
   auto iter = mNameToSwitch_.find(name);
   if (iter == mNameToSwitch_.end()) {
     if (!cache_[CACHE_KEY_CONTROLLERBYNAME][name]) {
-      std::cerr << "ERROR: unknown switch name: " << name << std::endl;
+      //std::cerr << "unknown switch name: " << name << std::endl;
       return nullptr;
     }
     auto wps = std::make_unique<WebPowerSwitch>(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
-    if (verbose_) {
+    if (verbose_ > 1) {
       wps->verboseCurl();
     }
-    if (cache_[CACHE_KEY_CONTROLLERBYNAME][name]
-              [CACHE_CONTROLLERBYNAME_KEY_USERNAME] &&
-        cache_[CACHE_KEY_CONTROLLERBYNAME][name]
-              [CACHE_CONTROLLERBYNAME_KEY_PASSWORD]) {
-      auto username = cache_[CACHE_KEY_CONTROLLERBYNAME][name]
-              [CACHE_CONTROLLERBYNAME_KEY_USERNAME].as<std::string>();
-      auto password = cache_[CACHE_KEY_CONTROLLERBYNAME][name]
-              [CACHE_CONTROLLERBYNAME_KEY_PASSWORD].as<std::string>();
-      if (wps->login(username, password) == false) {
-        std::cerr << "ERROR: cached username/password failed (switch name: " << name << ")." << std::endl;
+    for (auto up : vUsernamePassword_) {
+      // first page
+      auto request = wps->login(up.username, up.password);
+      if (request == nullptr) {
+        continue;
       }
+      if (curl_easy_perform(request) != CURLE_OK) {
+        continue;
+      }
+      // attempt login
+      request = wps->next();
+      if (curl_easy_perform(request) != CURLE_OK) {
+        continue;
+      }
+      // login succeeded, fetch outlets
+      request = wps->next();
+      if (curl_easy_perform(request) != CURLE_OK) {
+        continue;
+      }
+      // all done
+      if (wps->next() == nullptr) {
+        break;
+      } else {
+        std::cerr << "unexpected: " << wps->name() << std::endl;
+      }
+#ifdef kda_COMMENTED_OUT
+      if (wps->login(up.username, up.password) == false) {
+        break;
+      }
+#endif /* kda_COMMENTED_OUT */
     }
     if (wps->isLoggedIn() == false) {
-      for (auto up : vUsernamePassword_) {
-        if (wps->login(up.username, up.password) == false) {
-          break;
-        }
-      }
-    }
-    if (wps->isLoggedIn() == false) {
-      std::cerr << "ERROR: login failed switch name: " << name << std::endl;
+      //std::cerr << "login failed switch name: " << name << std::endl;
       return nullptr;
     }
     mNameToSwitch_[name].reset(wps.release());
@@ -115,10 +119,20 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitchByOutletName(std::string name) {
     return nullptr;
   }
   if (!cache_[CACHE_KEY_OUTLETS] || !cache_[CACHE_KEY_OUTLETS][name]) {
-    std::cerr << "ERROR: unknown outlet name: " << name << std::endl;
+    //std::cout << "unknown outlet name: " << name << std::endl;
     return nullptr;
   }
   return getSwitch(cache_[CACHE_KEY_OUTLETS][name][CACHE_OUTLETS_KEY_CONTROLLER].as<std::string>());
+#ifdef kda_COMMENTED_OUT
+  for (const auto& nameWps : mNameToSwitch_) {
+    for (const auto& outlet : nameWps.second->outlets()) {
+      if (outlet.name() == name) {
+        return nameWps.second.get();
+      }
+    }
+  }
+  return nullptr;
+#endif /* kda_COMMENTED_OUT */
 }
 
 Outlet* WebPowerSwitchManager::getOutletByName(std::string name) {
@@ -131,20 +145,21 @@ Outlet* WebPowerSwitchManager::getOutletByName(std::string name) {
 
 void WebPowerSwitchManager::dumpSwitches(std::ostream& ostr) {
   if (load() == false) {
-    std::cerr << "ERROR: no switches found or able to load" << std::endl;
+    std::cerr << "no switches found or able to load" << std::endl;
     return;
   }
+#ifdef kda_COMMENTED_OUT
+  // TODO(kda): sort by name
+  for (const auto& nameWps : mNameToSwitch_) {
+    nameWps.second->dumpOutlets(ostr);
+  }
+#endif /* kda_COMMENTED_OUT */
   auto cbnCache = cache_[CACHE_KEY_CONTROLLERBYNAME];
   //std::cout << "cbnCache: " << cbnCache << std::endl;
   for (auto controller : cbnCache) {
-    if (verbose_ > 1) {
-      std::cout << "INFO: controller: " << controller.first.as<std::string>() << std::endl;
-      //std::cout << "host: " << cbnCache[controller.first][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>() << std::endl;
-    }
+    //std::cout << "controller: " << controller.first.as<std::string>() << std::endl;
+    //std::cout << "host: " << cbnCache[controller.first][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>() << std::endl;
     auto wps = getSwitch(controller.first.as<std::string>());
-    if (wps == nullptr) {
-      continue;
-    }
     wps->dumpOutlets(ostr);
   }
 }
@@ -168,7 +183,7 @@ bool WebPowerSwitchManager::validateCacheFile() {
       mkdir(cacheDirectory.c_str(), 0777);
       chmod(cacheDirectory.c_str(), 0777);
     } else {
-      std::cerr << "ERROR: unable to create cache directory: " << cacheDirectory << std::endl;
+      std::cout << "unable to create cache directory: " << cacheDirectory << std::endl;
       return false;
     }
   } else {
@@ -201,12 +216,12 @@ void WebPowerSwitchManager::loadCache() {
 
   auto fd = open(cacheFile_.c_str(), O_RDONLY);
   if (fd < 0) {
-    std::cerr << "ERROR: failed to open cache: " << cacheFile_ << std::endl;
+    std::cerr << "failed to open cache: " << cacheFile_ << std::endl;
     return;
   }
   auto r = flock(fd, LOCK_SH | LOCK_NB);
   if (r < 0) {
-    std::cerr << "ERROR: failed to obtain write lock: " << cacheFile_ << std::endl;
+    std::cerr << "failed to obtain write lock: " << cacheFile_ << std::endl;
     close(fd);
     return;
   }
@@ -223,8 +238,15 @@ void WebPowerSwitchManager::loadCache() {
   try {
     cache_ = YAML::Load(ss.str());
   } catch (...) {
-    std::cerr << "ERROR: failed to load cache: " << cacheFile_ << std::endl;
+    std::cerr << "failed to load cache: " << cacheFile_ << std::endl;
   }
+#ifdef kda_COMMENTED_OUT
+  try {
+    cache_ = YAML::LoadFile(cacheFile_);
+  } catch (...) {
+    std::cerr << "failed to load cache: " << cacheFile_ << std::endl;
+  }
+#endif /* kda_COMMENTED_OUT */
 }
 
 void WebPowerSwitchManager::writeCacheStart() {
@@ -237,7 +259,7 @@ void WebPowerSwitchManager::writeCacheStart() {
   fdWrite_ = open(cacheFile_.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0777);
   auto r = flock(fdWrite_, LOCK_EX | LOCK_NB);
   if (r < 0) {
-    std::cerr << "ERROR: failed to obtain write lock: " << cacheFile_ << std::endl;
+    std::cerr << "failed to obtain write lock: " << cacheFile_ << std::endl;
     close(fdWrite_);
     return;
   }
@@ -257,11 +279,52 @@ void WebPowerSwitchManager::writeCacheFinish() {
   ss << cache_;
   auto output = ss.str();
   if (write(fdWrite_, output.c_str(), output.length()) != output.length()) {
-    std::cerr << "ERROR: failed to write cache: " << cacheFile_ << std::endl;
+    std::cerr << "failed to write cache: " << cacheFile_ << std::endl;
   }
   close(fdWrite_);
   fdWrite_ = -1;
 }
+
+#ifdef kda_COMMENTED_OUT
+void WebPowerSwitchManager::writeCache() {
+  if (enableCache_ == false) {
+    return;
+  }
+  if (isCacheLoaded() == false) {
+    return;
+  }
+  if (validateCacheFile() == false) {
+    return;
+  }
+
+  std::stringstream ss;
+  ss << cache_;
+  
+  auto fd = open(cacheFile_.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0777);
+  auto r = flock(fd, LOCK_EX | LOCK_NB);
+  if (r < 0) {
+    std::cerr << "failed to obtain write lock: " << cacheFile_ << std::endl;
+    close(fd);
+    return;
+  }
+  auto output = ss.str();
+  if (write(fd, output.c_str(), output.length()) != output.length()) {
+    std::cerr << "failed to write cache: " << cacheFile_ << std::endl;
+  }
+  close(fd);
+#ifdef kda_COMMENTED_OUT
+  std::fstream f(cacheFile_.c_str(), std::ios_base::out | std::ios_base::trunc);
+  if (f.good() == false) {
+    std::cout << "failed to open cache file for writing: " << cacheFile_ << std::endl;
+  } else {
+    f << cache_;
+  }
+  f.close();
+  // ensure all can access and update
+  chmod(cacheFile_.c_str(), 0777);
+#endif /* kda_COMMENTED_OUT */
+}
+#endif /* kda_COMMENTED_OUT */
 
 void WebPowerSwitchManager::findSwitches() {
   if (findSwitches_ == false) {
@@ -282,34 +345,126 @@ void WebPowerSwitchManager::findSwitches() {
 
   unsigned long firstIp = ntohl(ipaddress.s_addr & subnetmask.s_addr);
   unsigned long lastIp = ntohl(ipaddress.s_addr | ~(subnetmask.s_addr));
-  std::vector<std::future<bool>> threads;
+#ifdef kda_COMMENTED_OUT
+  unsigned long firstIp = 3232280880;
+#ifdef kda_COMMENTED_OUT
+  unsigned long lastIp = firstIp;
+#endif /* kda_COMMENTED_OUT */
+  unsigned long lastIp = 3232280890;
+#endif /* kda_COMMENTED_OUT */
   std::vector<std::unique_ptr<WebPowerSwitch>> switches;
+  //std::vector<std::thread> threads;
+  CURLM* multi_handle = curl_multi_init();
   for (auto ip = firstIp; ip <= lastIp; ip++) {
     struct in_addr testIp = { htonl(ip) };
     if (verbose_ > 2) {
-      std::cout << "INFO: ip: " << ip << " - " << htonl(ip) << " - " << inet_ntoa(testIp) << std::endl;
+      std::cout << "ip: " << ip << " - " << htonl(ip) << " - " << inet_ntoa(testIp) << std::endl;
     }
 
     for (auto up : vUsernamePassword_) {
       std::unique_ptr<WebPowerSwitch> wps(new WebPowerSwitch(inet_ntoa(testIp)));
-      if (verbose_ > 2) {
+      if (verbose_ > 1) {
+        wps->verbose();
         wps->verboseCurl();
       } else {
         wps->suppressDetectionErrors();
       }
-      threads.push_back(std::async(std::launch::async, &WebPowerSwitch::login, wps.get(), up.username, up.password));
+      CURL* request = wps->login(up.username, up.password);
+      if (request == nullptr) {
+        continue;
+      }
+      curl_multi_add_handle(multi_handle, request);
       switches.push_back(std::move(wps));
     }
   }
 
-  // wait for all threads to finish
-  std::for_each(threads.begin(), threads.end(), [](std::future<bool>& fut){fut.get();});
+  // wait for requests to finish
+  int still_running = 1;
+  CURLMsg* msg;
+  int msgs_left;
+  while (still_running) {
+    CURLMcode mc = curl_multi_perform(multi_handle, &still_running);
+    if (still_running) {
+      mc = curl_multi_poll(multi_handle, nullptr, 0, 1000, nullptr);
+    }
+    if (mc) {
+      std::cout << "=== mc: " << mc << std::endl;
+      break;
+    }
+    while ((msg = curl_multi_info_read(multi_handle, &msgs_left))) {
+      if (msg->msg == CURLMSG_DONE) {
+        for (auto& wps : switches) {
+          if (msg->easy_handle == wps->handle()) {
+            if (verbose_ > 2) {
+              std::cout << "done: " << wps->host() << std::endl;
+            }
+            curl_multi_remove_handle(multi_handle, wps->handle());
+            if (msg->data.result == CURLE_OK) {
+              //std::cout << "looking good: " << wps->host() << std::endl;
+              CURL* request = wps->next();
+              if (request != nullptr) {
+                curl_multi_add_handle(multi_handle, request);
+              } else {
+                // request == nullptr: must be done here
+              }
+              break;
+            } else {
+              // not CURLE_OK
+              wps->logout();
+            }
+          }
+        }
+      }
+    }
+    // If there are still handles present, then continue checking for progress
+    // maybe could be replaced with setting still_running above where handle is added.
+    if (!still_running) {
+      for (auto& wps : switches) {
+        if (wps->handle() != nullptr) {
+          still_running = 1;
+          break;
+        }
+      }
+    }
+  }
 
+  // Let them all finish completely.
+  // (Althouygh I'm not sure this is necessary anymore.)
+  while ((msg = curl_multi_info_read(multi_handle, &msgs_left))) {
+    if (msg->msg == CURLMSG_DONE) {
+      for (auto& wps : switches) {
+        if (msg->easy_handle == wps->handle()) {
+          if (verbose_ > 2) {
+            std::cout << "done: " << wps->host() << std::endl;
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  curl_multi_cleanup(multi_handle);
+  multi_handle = nullptr;
+
+  if (verbose_) {
+    std::cout << "switches" << std::endl;
+  }
+
+#ifdef kda_COMMENTED_OUT
+  for (auto& wps : switches) {
+    if (wps->isLoggedIn()) {
+      if (verbose_) {
+        std::cout << "host: " << wps->host() << " name: " << wps->name() << std::endl;
+      }
+      mNameToSwitch_[wps->name()].reset(wps.release());
+    }
+  }
+#endif /* kda_COMMENTED_OUT */
   // parse the successes
   for (auto & wps : switches) {
     if (wps->isLoggedIn()) {
-      if (verbose_ > 1) {
-        std::cout << "INFO: host: " << wps->host() << " name: " << wps->name() << std::endl;
+      if (verbose_) {
+        std::cout << "host: " << wps->host() << " name: " << wps->name() << std::endl;
       }
       auto outletsCache = cache_[CACHE_KEY_OUTLETS];
       //std::cout << "controller: " << wps.name() << std::endl;
@@ -320,8 +475,6 @@ void WebPowerSwitchManager::findSwitches() {
         outletsCache[outlet.name()][CACHE_OUTLETS_KEY_ID] = outlet.id();
       }
       cache_[CACHE_KEY_CONTROLLERBYNAME][wps->name()][CACHE_CONTROLLERBYNAME_KEY_HOST] = wps->host();
-      cache_[CACHE_KEY_CONTROLLERBYNAME][wps->name()][CACHE_CONTROLLERBYNAME_KEY_USERNAME] = wps->username();
-      cache_[CACHE_KEY_CONTROLLERBYNAME][wps->name()][CACHE_CONTROLLERBYNAME_KEY_PASSWORD] = wps->password();
       mNameToSwitch_[wps->name()].reset(wps.release());
     }
   }
@@ -348,7 +501,7 @@ std::string WebPowerSwitchManager::getDefaultInterface() {
 void WebPowerSwitchManager::getIpAddressAndSubnetMask(std::string interface, std::string& ipAddress, std::string& subNetMask) {
   struct ifaddrs* ifap;
   if (getifaddrs(&ifap) != 0) {
-    std::cerr << "ERROR: getifaddrs failed: " << errno << " " << strerror(errno) << std::endl;
+    std::cout << "getifaddrs failed: " << errno << " " << strerror(errno) << std::endl;
     return;
   }
 

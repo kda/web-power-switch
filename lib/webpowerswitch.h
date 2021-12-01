@@ -38,7 +38,7 @@ public:
 private:
   int id_;
   std::string name_;
-  OutletState state_;
+  OutletState state_ = OUTLET_STATE_UNKNOWN;
 
   friend std::ostream& operator<<(std::ostream& out, const Outlet& outlet) {
     out << std::setw(2) << outlet.id() << "   ";
@@ -56,11 +56,8 @@ public:
   void suppressDetectionErrors() {
     suppressDetectionErrors_ = true;
   }
-  bool connect();
-  bool isConnected() const {
-    return connected_;
-  }
-  bool login(std::string username, std::string password);
+  CURL* login(std::string username, std::string password);
+  CURL* next();
   void logout();
   bool isLoggedIn() const {
     return loggedIn_;
@@ -69,11 +66,8 @@ public:
   std::string host() const {
     return host_;
   }
-  std::string username() const {
-    return username_;
-  }
-  std::string password() const {
-    return password_;
+  CURL* handle() {
+    return request_;
   }
   std::string name() const {
     if (loggedIn_ == false) {
@@ -96,13 +90,23 @@ public:
   }
 
 private:
+  enum State {
+    STATE_UNINITIALIZED = 0,
+    STATE_INITIAL_PAGE_REQUESTED,
+    STATE_LOGIN_REQUESTED,
+    STATE_LOGGED_IN,
+    STATE_LOGIN_FAILED,
+    STATE_OUTLETS_BUILT,
+  };
+  State state_ = STATE_UNINITIALIZED;
   std::string prefix_ = {"http://"};
   std::string host_;
+  CURL* request_ = nullptr;
+  std::ostringstream os_;
   std::string username_;
   std::string password_;
-  bool connected_ { false };
-  bool loggedIn_ { false };
-  CURLSH* share_ { nullptr };
+  bool loggedIn_ = false;
+  CURLSH* share_ = nullptr;
   std::string name_ = {};
   std::vector<Outlet> outlets_;
   bool suppressDetectionErrors_ = false;
@@ -111,6 +115,10 @@ private:
   bool verboseCurl_ = false;
   time_t nextBuild_ = 0;
 
+  void initializeRequest();
+  void clearRequest();
+	void dumpCookies();
+  void prepToFetchOutlets();
   void buildOutlets(bool force = false);
   bool setState(const Outlet* outlet, OutletState newState);
 };
