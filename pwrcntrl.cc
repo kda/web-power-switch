@@ -9,7 +9,7 @@
 int main(int iArgc, char* szArgv[]) {
   cxxopts::Options options(szArgv[0], "control web power switches");
   options
-    .positional_help("([show]|on|off|toggle|cycle)")
+    .positional_help("(all|switch_name|outlet_name) ([show]|on|off|toggle|cycle)")
     .show_positional_help();
   options
     .allow_unrecognised_options()
