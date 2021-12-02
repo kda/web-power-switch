@@ -2,8 +2,9 @@ project('web-power-switch', 'cpp',
   version : '0.1',
   default_options : ['warning_level=3', 'cpp_std=c++17'])
 
+libcrypto_dep = dependency('libcrypto')
 libcurl_dep = dependency('libcurl')
-openssl_dep = dependency('openssl')
+libssl_dep = dependency('libssl')
 tidy_dep = dependency('tidy')
 yamlcpp_dep = dependency('yaml-cpp')
 
@@ -20,8 +21,9 @@ executable('pwrcntrl',
            include_directories : wps_inc,
            dependencies : [
                           cxxopts_dep,
+                          libcrypto_dep,
                           libcurl_dep,
-                          openssl_dep,
+                          libssl_dep,
                           tidy_dep,
                           yamlcpp_dep,
                           ],
