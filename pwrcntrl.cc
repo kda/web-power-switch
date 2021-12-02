@@ -63,7 +63,6 @@ int main(int iArgc, char* szArgv[]) {
     commandLineArguments = loadCommandLineArguments(iArgc, szArgv, optionsResult["options"].as<std::string>());
     optionsResult = options.parse(commandLineArguments.size(), &commandLineArguments[0]);
   }
-  //std::cout << "parsed" << std::endl;
 
   std::string target;
   if (optionsResult.count("target")) {
@@ -77,8 +76,12 @@ int main(int iArgc, char* szArgv[]) {
     std::cout << options.help() << std::endl;
     return 0;
   }
-  //std::cout << "no help" << std::endl;
 
+  if (optionsResult.count("verbose") > 1) {
+    for (auto argument : commandLineArguments) {
+      std::cout << "commandLineArguments: " << argument << std::endl;
+    }
+  }
 
   std::unique_ptr<WebPowerSwitchManager> wpsm(new WebPowerSwitchManager);
 

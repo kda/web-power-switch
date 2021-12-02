@@ -53,7 +53,8 @@ public:
   void suppressDetectionErrors() {
     suppressDetectionErrors_ = true;
   }
-  CURL* login(std::string username, std::string password);
+  bool login(std::string username, std::string password);
+  CURL* startLogin(std::string username, std::string password);
   CURL* next();
   void logout();
   bool isLoggedIn() const {

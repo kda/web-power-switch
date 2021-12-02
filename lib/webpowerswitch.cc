@@ -111,7 +111,16 @@ WebPowerSwitch::~WebPowerSwitch() {
   logout();
 }
 
-CURL* WebPowerSwitch::login(std::string username, std::string password) {
+bool WebPowerSwitch::login(std::string username, std::string password) {
+  // first page
+  auto request = startLogin(username, password);
+  while (request != nullptr && curl_easy_perform(request) == CURLE_OK) {
+    request = next();
+  }
+  return isLoggedIn();
+}
+
+CURL* WebPowerSwitch::startLogin(std::string username, std::string password) {
   if (loggedIn_) {
     return nullptr;
   }
@@ -174,7 +183,7 @@ CURL* WebPowerSwitch::next() {
     //std::cout << "os_: " << os_.str() << std::endl;
     result = tidyParseString(tdw, os_.str().c_str());
     if (result > 1) {
-      std::cerr << "(login) failed to parse: " << result << std::endl;
+      std::cerr << "(initial page) failed to parse: " << result << std::endl;
       std::cerr << "errbuf: " << errbuf.bp << std::endl;
       return nullptr;
     }
@@ -278,7 +287,7 @@ CURL* WebPowerSwitch::next() {
     }
     result = tidyParseString(tdw, os_.str().c_str());
     if (result > 1) {
-      std::cerr << "(buildOutlets) failed to parse: " << result << std::endl;
+      std::cerr << "(outlets) failed to parse: " << result << std::endl;
       std::cerr << "errbuf: " << errbuf.bp << std::endl;
       return nullptr;
     }

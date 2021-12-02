@@ -69,30 +69,8 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_mi
     auto wps = std::make_unique<WebPowerSwitch>(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
     wps->verbose(verbose_);
     for (auto up : vUsernamePassword_) {
-      // TODO(kda): move to method on webpowerswitch
-      // first page
-      auto request = wps->login(up.username, up.password);
-      if (request == nullptr) {
-        continue;
-      }
-      if (curl_easy_perform(request) != CURLE_OK) {
-        continue;
-      }
-      // attempt login
-      request = wps->next();
-      if (curl_easy_perform(request) != CURLE_OK) {
-        continue;
-      }
-      // login succeeded, fetch outlets
-      request = wps->next();
-      if (curl_easy_perform(request) != CURLE_OK) {
-        continue;
-      }
-      // all done
-      if (wps->next() == nullptr) {
+      if (wps->login(up.username, up.password)) {
         break;
-      } else {
-        std::cerr << "unexpected: " << wps->name() << std::endl;
       }
     }
     if (wps->isLoggedIn() == false) {
@@ -284,7 +262,7 @@ void WebPowerSwitchManager::findSwitches() {
       std::unique_ptr<WebPowerSwitch> wps(new WebPowerSwitch(inet_ntoa(testIp)));
       wps->verbose(verbose_);
       wps->suppressDetectionErrors();
-      CURL* request = wps->login(up.username, up.password);
+      CURL* request = wps->startLogin(up.username, up.password);
       if (request == nullptr) {
         continue;
       }
