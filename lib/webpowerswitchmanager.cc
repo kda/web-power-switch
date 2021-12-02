@@ -31,10 +31,6 @@ bool WebPowerSwitchManager::addUsernamePassword(std::string username, std::strin
   return true;
 }
 
-bool WebPowerSwitchManager::addSwitch(std::string hostname, std::string username, std::string password) {
-  return false;
-}
-
 bool WebPowerSwitchManager::load() {
   if (isCacheLoaded()) {
     return true;
@@ -71,10 +67,9 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_mi
       return nullptr;
     }
     auto wps = std::make_unique<WebPowerSwitch>(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
-    if (verbose_ > 1) {
-      wps->verboseCurl();
-    }
+    wps->verbose(verbose_);
     for (auto up : vUsernamePassword_) {
+      // TODO(kda): move to method on webpowerswitch
       // first page
       auto request = wps->login(up.username, up.password);
       if (request == nullptr) {
@@ -253,7 +248,7 @@ void WebPowerSwitchManager::writeCacheFinish() {
   std::stringstream ss;
   ss << cache_;
   auto output = ss.str();
-  if (write(fdWrite_, output.c_str(), output.length()) != output.length()) {
+  if (write(fdWrite_, output.c_str(), output.length()) != static_cast<ssize_t>(output.length())) {
     std::cerr << "failed to write cache: " << cacheFile_ << std::endl;
   }
   close(fdWrite_);
@@ -269,8 +264,6 @@ void WebPowerSwitchManager::findSwitches() {
   std::string ipAddress;
   std::string subNetMask;
   getIpAddressAndSubnetMask(interface, ipAddress, subNetMask);
-  //std::cout << "ipAddress: " << ipAddress << std::endl;
-  //std::cout << "subNetMask: " << subNetMask << std::endl;
 
   struct in_addr ipaddress;
   struct in_addr subnetmask;
@@ -280,22 +273,17 @@ void WebPowerSwitchManager::findSwitches() {
   unsigned long firstIp = ntohl(ipaddress.s_addr & subnetmask.s_addr);
   unsigned long lastIp = ntohl(ipaddress.s_addr | ~(subnetmask.s_addr));
   std::vector<std::unique_ptr<WebPowerSwitch>> switches;
-  //std::vector<std::thread> threads;
   CURLM* multi_handle = curl_multi_init();
   for (auto ip = firstIp; ip <= lastIp; ip++) {
     struct in_addr testIp = { htonl(ip) };
-    if (verbose_ > 2) {
+    if (verbose_ > 1) {
       std::cout << "ip: " << ip << " - " << htonl(ip) << " - " << inet_ntoa(testIp) << std::endl;
     }
 
     for (auto up : vUsernamePassword_) {
       std::unique_ptr<WebPowerSwitch> wps(new WebPowerSwitch(inet_ntoa(testIp)));
-      if (verbose_ > 1) {
-        wps->verbose();
-        wps->verboseCurl();
-      } else {
-        wps->suppressDetectionErrors();
-      }
+      wps->verbose(verbose_);
+      wps->suppressDetectionErrors();
       CURL* request = wps->login(up.username, up.password);
       if (request == nullptr) {
         continue;
@@ -384,10 +372,10 @@ void WebPowerSwitchManager::findSwitches() {
         std::cout << "host: " << wps->host() << " name: " << wps->name() << std::endl;
       }
       auto outletsCache = cache_[CACHE_KEY_OUTLETS];
-      //std::cout << "controller: " << wps.name() << std::endl;
-      //std::cout << " #  State  Name" << std::endl;
       for (auto outlet : wps->outlets()) {
-        //std::cout << outlet << std::endl;
+        if (verbose_ > 1) {
+          std::cout << "outlet: " << outlet << std::endl;
+        }
         outletsCache[outlet.name()][CACHE_OUTLETS_KEY_CONTROLLER] = wps->name();
         outletsCache[outlet.name()][CACHE_OUTLETS_KEY_ID] = outlet.id();
       }
@@ -403,11 +391,8 @@ std::string WebPowerSwitchManager::getDefaultInterface() {
   const size_t BUFSIZE = 1024;
   char buffer[BUFSIZE];
   while (routes.getline(buffer, BUFSIZE)) {
-    //std::cout << "buffer: " << buffer << std::endl;
     std::istringstream iss(buffer);
     std::vector<std::string> pieces((std::istream_iterator<std::string>(iss)), std::istream_iterator<std::string>());
-    //std::cout << "interface: " << pieces[0] << std::endl;
-    //std::cout << "destination: " << pieces[1] << std::endl;
     if (std::stoul(pieces[1], nullptr, 16) == 0) {
       return pieces[0];
     }

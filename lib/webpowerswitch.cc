@@ -75,6 +75,7 @@ int my_trace(CURL *handle, curl_infotype type,
   switch (type) {
   case CURLINFO_TEXT:
     fprintf(stderr, "== Info: %s", data);
+    [[fallthrough]];
   default: /* in case a new one is introduced to shock us */
     return 0;
  
@@ -137,7 +138,7 @@ CURL* WebPowerSwitch::login(std::string username, std::string password) {
   curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host()).c_str());
   //curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
   curl_easy_setopt(request_, CURLOPT_TIMEOUT, CURL_TIMEOUT);
-  if (verboseCurl_) {
+  if (verbose_ > 2) {
     curl_easy_setopt(request_, CURLOPT_VERBOSE, 1L);
   }
   state_ = STATE_INITIAL_PAGE_REQUESTED;
@@ -158,7 +159,7 @@ CURL* WebPowerSwitch::next() {
     clearRequest();
     // Parse
     TidyDocWrapper tdw;
-    TidyBuffer errbuf = {0};
+    TidyBuffer errbuf = {};
     auto result = tidySetErrorBuffer(tdw, &errbuf);
     if (result != 0) {
       std::cerr << "failed to set error buffer: " << result << std::endl;
@@ -181,7 +182,7 @@ CURL* WebPowerSwitch::next() {
     // Find Challenge value
     TidyNode inputNode = tidyHelper::findNodeByAttr(tdw, "input", TidyAttr_NAME, "challenge", nullptr);
     if (inputNode == nullptr) {
-      if (!suppressDetectionErrors_) {
+      if (!detectionErrorsAreSuppressed()) {
         std::cerr << "host(): " << host() << " failed to find input" << std::endl;
       }
       return nullptr;
@@ -230,7 +231,7 @@ CURL* WebPowerSwitch::next() {
     curl_easy_setopt(request_, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(request_, CURLOPT_SHARE, share_);
     curl_easy_setopt(request_, CURLOPT_TIMEOUT, CURL_TIMEOUT);
-    if (verboseCurl_) {
+    if (verbose_ > 2) {
       curl_easy_setopt(request_, CURLOPT_VERBOSE, 1L);
     }
     curl_easy_setopt(request_, CURLOPT_FOLLOWLOCATION, 1L);
@@ -255,7 +256,7 @@ CURL* WebPowerSwitch::next() {
       return request_;
     } else {
       state_ = STATE_LOGIN_FAILED;
-      if (!suppressDetectionErrors_) {
+      if (!detectionErrorsAreSuppressed()) {
         std::cout << "host(): " << host() << " responseCode: " << responseCode << std::endl;
         std::cout << "os_: " << os_.str() << std::endl;
       }
@@ -269,7 +270,7 @@ CURL* WebPowerSwitch::next() {
     //std::cout << "os_: " << os_.str() << std::endl;
 
     TidyDocWrapper tdw;
-    TidyBuffer errbuf = {0};
+    TidyBuffer errbuf = {};
     auto result = tidySetErrorBuffer(tdw, &errbuf);
     if (result != 0) {
       std::cerr << "failed to set error buffer: " << result << std::endl;
@@ -288,7 +289,7 @@ CURL* WebPowerSwitch::next() {
       std::cerr << "findNodeByContent failed (" << host() << ") 'th' 'Controller: '" << std::endl;
       return nullptr;
     }
-    TidyBuffer tbuf = {0};
+    TidyBuffer tbuf = {};
     tidyNodeGetText(tdw, node, &tbuf);
     //if (tidyNodeGetText(tdw, node, &tbuf) == false) {
       //std::cerr << "tidyNodeGetText failed (" << host() << "). errbuf: " << errbuf.bp << std::endl;
@@ -312,7 +313,7 @@ CURL* WebPowerSwitch::next() {
 
       auto td = tidyGetChild(tr);
       auto number = tidyGetChild(td);
-      TidyBuffer tbuf = {0};
+      TidyBuffer tbuf = {};
       tidyNodeGetText(tdw, number, &tbuf);
       int outletId = atoi(reinterpret_cast<char *>(tbuf.bp));
 
@@ -376,7 +377,9 @@ void WebPowerSwitch::initializeRequest() {
   os_.seekp(0);
   os_.str("");
   curl_easy_setopt(request_, CURLOPT_WRITEDATA, &os_);
-	//curl_easy_setopt(request_, CURLOPT_DEBUGFUNCTION, my_trace);
+  if (verbose_ > 2) {
+    curl_easy_setopt(request_, CURLOPT_DEBUGFUNCTION, my_trace);
+  }
 }
 
 void WebPowerSwitch::clearRequest() {
@@ -387,7 +390,7 @@ void WebPowerSwitch::clearRequest() {
 }
 
 void WebPowerSwitch::dumpCookies() {
-  if (verbose_ == false) {
+  if (verbose_ < 2) {
     return;
   }
 	/* extract all known cookies */
@@ -420,14 +423,14 @@ void WebPowerSwitch::prepToFetchOutlets() {
   curl_easy_setopt(request_, CURLOPT_COOKIEFILE, "");
   curl_easy_setopt(request_, CURLOPT_SHARE, share_);
   curl_easy_setopt(request_, CURLOPT_TIMEOUT, CURL_TIMEOUT);
-  if (verboseCurl_) {
+  if (verbose_ > 2) {
     curl_easy_setopt(request_, CURLOPT_VERBOSE, 1L);
   }
   dumpCookies();
   curl_easy_setopt(request_, CURLOPT_FOLLOWLOCATION, 1L);
 }
 
-void WebPowerSwitch::buildOutlets(bool force) {
+void WebPowerSwitch::buildOutlets() {
   if (loggedIn_ == false) {
     std::cerr << "not logged in" << std::endl;
     return;
@@ -510,7 +513,7 @@ bool WebPowerSwitch::setState(const Outlet* outlet, OutletState newState) {
   curl_easy_setopt(request, CURLOPT_SHARE, share_);
   curl_easy_setopt(request, CURLOPT_COOKIEFILE, "");
   curl_easy_setopt(request, CURLOPT_TIMEOUT, CURL_TIMEOUT);
-  if (verboseCurl_) {
+  if (verbose_ > 2) {
     curl_easy_setopt(request, CURLOPT_VERBOSE, 1L);
   }
 
@@ -520,6 +523,6 @@ bool WebPowerSwitch::setState(const Outlet* outlet, OutletState newState) {
 
   auto result = curl_easy_perform(request);
 
-  buildOutlets(true);
+  buildOutlets();
   return result == CURLE_OK;
 }

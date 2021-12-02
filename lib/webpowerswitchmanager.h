@@ -14,7 +14,6 @@ public:
   WebPowerSwitchManager(bool enableCache, bool findSwitches);
   ~WebPowerSwitchManager();
   bool addUsernamePassword(std::string username, std::string password);
-  bool addSwitch(std::string hostname, std::string username, std::string password);
   bool load();
   void resetCache();
   WebPowerSwitch* getSwitch(std::string name, bool allow_miss = false);

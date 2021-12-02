@@ -63,7 +63,7 @@ TidyNode findNodeByContent(TidyDoc tdoc, const std::string& name,
     auto child = tidyGetChild(node);
     //std::cout << "tidyNodeGetType(child): " << tidyNodeGetType(child) << std::endl;
     if (tidyNodeGetType(child) == TidyNode_Text) {
-      TidyBuffer tbuf = {0};
+      TidyBuffer tbuf = {};
       if (tidyNodeGetText(tdoc, child, &tbuf) == false) {
         std::cout << "tidyNodeGetText failed" << std::endl;
       } else {
@@ -74,7 +74,7 @@ TidyNode findNodeByContent(TidyDoc tdoc, const std::string& name,
             return child;
           }
           if (prevNode == child) {
-            prevNode == nullptr;
+            prevNode = nullptr;
           }
         }
       }

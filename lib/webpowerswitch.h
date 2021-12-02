@@ -79,11 +79,8 @@ public:
   bool on(const std::string& outletName);
   bool off(const std::string& outletName);
   bool toggle(const std::string& outletName);
-  void verbose() {
-    verbose_ = true;
-  }
-  void verboseCurl() {
-    verboseCurl_ = true;
+  void verbose(int increment = 1) {
+    verbose_ += increment;
   }
 
 private:
@@ -108,16 +105,18 @@ private:
   std::vector<Outlet> outlets_;
   bool suppressDetectionErrors_ = false;
   static const long CURL_TIMEOUT;
-  bool verbose_ = false;
-  bool verboseCurl_ = false;
+  int verbose_ { 0 };
   time_t nextBuild_ = 0;
 
   void initializeRequest();
   void clearRequest();
 	void dumpCookies();
   void prepToFetchOutlets();
-  void buildOutlets(bool force = false);
+  void buildOutlets();
   bool setState(const Outlet* outlet, OutletState newState);
+  bool detectionErrorsAreSuppressed() {
+    return suppressDetectionErrors_ && verbose_ == 0;
+  }
 };
 
 
