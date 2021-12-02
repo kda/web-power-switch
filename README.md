@@ -6,7 +6,7 @@ Features:
 
 Build
 
-  - sudo apt install -y libtidy-dev libyaml-cpp-dev libcurl4-gnutls-dev
+  - sudo apt install cmake libtidy-dev libyaml-cpp-dev libcurl4-gnutls-dev
   - meson build
   - ninja -C build
 
