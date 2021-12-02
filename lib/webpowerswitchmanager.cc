@@ -1,13 +1,12 @@
 #include "webpowerswitchmanager.h"
 
 #include <arpa/inet.h>
+#include <cstring>
 #include <dirent.h>
 #include <fstream>
-#include <fcntl.h>
 #include <ifaddrs.h>
 #include <iostream>
 #include <netdb.h>
-#include <string.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <unistd.h>

@@ -3,9 +3,6 @@
 
 #include <curl/curl.h>
 #include <iomanip>
-#include <string>
-#include <set>
-#include <time.h>
 #include <vector>
 
 

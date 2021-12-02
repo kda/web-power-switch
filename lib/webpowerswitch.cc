@@ -1,13 +1,10 @@
 #include "webpowerswitch.h"
 
-#include <iomanip>
-#include <stdlib.h>
 #include <iostream>
 #include <openssl/md5.h>
-#include <sstream>
+#include <string.h>
 #include <tidy/tidybuffio.h>
 #include <unordered_map>
-#include <unistd.h>
 
 #include "tidyHelper.h"
 #include "tidydocwrapper.h"
