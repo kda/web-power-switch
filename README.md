@@ -1,8 +1,13 @@
 Web Power Switch - C++ Library
-with discovery.
 
-To get it to build, these are needed:
-sudo apt-get install libtidy-dev libyaml-cpp-dev libcurl4-openssl-dev libssl-dev libcxxopts-dev
-(maybe libtidy5deb1)
+Features:
+  - auto discovery (finds switch on the same network as host)
+  - cached recollection of switches (refreshed forcefully or automatically)
+
+Build
+
+  - clone
+  - meson build
+  - ninja -C build
 
 Mostly works on ubuntu and raspios.
