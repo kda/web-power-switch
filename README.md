@@ -6,7 +6,7 @@ Features:
 
 Build
 
-  - clone
+  - sudo apt install -y libtidy-dev libyaml-cpp-dev libcurl4-gnutls-dev
   - meson build
   - ninja -C build
 
