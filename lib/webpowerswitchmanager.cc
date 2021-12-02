@@ -58,14 +58,16 @@ void WebPowerSwitchManager::resetCache() {
   resetCache_ = true;
 }
 
-WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name) {
+WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_miss) {
   if (load() == false) {
     return nullptr;
   }
   auto iter = mNameToSwitch_.find(name);
   if (iter == mNameToSwitch_.end()) {
     if (!cache_[CACHE_KEY_CONTROLLERBYNAME][name]) {
-      std::cerr << "ERROR: unknown switch name: " << name << std::endl;
+      if (allow_miss == false) {
+        std::cerr << "ERROR: unknown switch name: " << name << std::endl;
+      }
       return nullptr;
     }
     auto wps = std::make_unique<WebPowerSwitch>(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());

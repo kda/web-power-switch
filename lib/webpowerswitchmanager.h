@@ -17,7 +17,7 @@ public:
   bool addSwitch(std::string hostname, std::string username, std::string password);
   bool load();
   void resetCache();
-  WebPowerSwitch* getSwitch(std::string name);
+  WebPowerSwitch* getSwitch(std::string name, bool allow_miss = false);
   WebPowerSwitch* getSwitchByOutletName(std::string name);
   Outlet* getOutletByName(std::string name);
   void dumpSwitches(std::ostream& ostr);

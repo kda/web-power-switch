@@ -116,7 +116,7 @@ int main(int iArgc, char* szArgv[]) {
     return 0;
   }
 
-  auto wps = wpsm->getSwitch(target);
+  auto wps = wpsm->getSwitch(target, true);
   if (wps != nullptr) {
     wps->dumpOutlets(std::cout);
     return 0;
@@ -124,7 +124,7 @@ int main(int iArgc, char* szArgv[]) {
 
   wps = wpsm->getSwitchByOutletName(target);
   if (wps == nullptr) {
-    std::cout << "unknown outlet: " << target << std::endl;
+    std::cout << "unknown outlet (or switch): " << target << std::endl;
     return -1;
   }
 
