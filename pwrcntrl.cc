@@ -1,29 +1,68 @@
 #include <cxxopts.hpp>
-#include <iostream>
-#include <strings.h>
+#include <fstream>
 #include <unistd.h>
 
 #include "webpowerswitchmanager.h"
 
+// must persist beyond life of method
+static std::vector<std::string> arguments;
+
+std::vector<char*> loadCommandLineArguments(int iArgc, char* szArgv[], std::string optionsFilename) {
+  std::vector<char*> cla;
+  for (int iArg = 0; iArg < iArgc; iArg++, szArgv++) {
+    cla.push_back(*szArgv);
+  }
+
+  std::ifstream optionsFile(optionsFilename);
+  if (optionsFile.good()) {
+    const std::regex wsRE("\\s+");
+    arguments.clear();
+    for (std::string line; std::getline(optionsFile, line); ) {
+      if (line.empty() || line[0] == '#') {
+        continue;
+      }
+      std::copy(
+        std::sregex_token_iterator(line.begin(), line.end(), wsRE, -1),
+        std::sregex_token_iterator(),
+        std::back_inserter<std::vector<std::string>>(arguments));
+    }
+    for (const auto& argument : arguments) {
+      cla.push_back(const_cast<char*>(argument.c_str()));
+    }
+  }
+
+  return cla;
+}
+
 
 int main(int iArgc, char* szArgv[]) {
   cxxopts::Options options(szArgv[0], "pwrcntrl: control web power switches");
+
+  std::string optionsFilename(getenv("HOME"));
+  optionsFilename += "/.pwrcntrlrc";
+
   options
     .positional_help("(all|switch_name|outlet_name) ([show]|on|off|toggle|cycle)")
     .show_positional_help();
   options
     .allow_unrecognised_options()
     .add_options()
+      ("command", "show|on|off|toggle|cycle: show, turn on, turn off, toggle or cycle outlet.", cxxopts::value<std::string>())
       ("credentials", "provide pairs of username:password to use on switch(es).", cxxopts::value<std::vector<std::string>>())
-      ("command", "[show]|on|off|toggle|cycle: show, turn on, turn off, toggle or cycle outlet.", cxxopts::value<std::string>())
       ("help", "show help")
-      ("r,reset", "even if switch locations are known, go find them again", cxxopts::value<bool>()->default_value("false"))
-      ("t,target", "'all', name of switch, name of outlet", cxxopts::value<std::string>())
+      ("options", "<option_file>: read command line parameters from option_file.", cxxopts::value<std::string>()->default_value(optionsFilename))
+      ("r,reset", "even if switch locations are known, go find them again.")
+      ("t,target", "'all'|<name_of_switch|name_of_outlet", cxxopts::value<std::string>())
       ("v,verbose", "increate verbosity of output")
     ;
 
   options.parse_positional({"target", "command"});
-  auto optionsResult = options.parse(iArgc, szArgv);
+  auto commandLineArguments = loadCommandLineArguments(iArgc, szArgv, optionsFilename);
+  auto optionsResult = options.parse(commandLineArguments.size(), &commandLineArguments[0]);
+  if (optionsResult.count("options") && optionsResult["options"].as<std::string>() != optionsFilename) {
+    commandLineArguments = loadCommandLineArguments(iArgc, szArgv, optionsResult["options"].as<std::string>());
+    optionsResult = options.parse(commandLineArguments.size(), &commandLineArguments[0]);
+  }
   //std::cout << "parsed" << std::endl;
 
   std::string target;
