@@ -55,6 +55,10 @@ void WebPowerSwitchManager::resetCache() {
 }
 
 WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_miss) {
+  if (verbose_ > 2) {
+    std::cerr << "DEBUG: WebPowerSwitchManager::getSwitch(" << name << ", "
+              << allow_miss << ") called" << std::endl;
+  }
   if (load() == false) {
     if (verbose_ > 3) {
       std::cerr << "DEBUG: load() failed in getSwitch" << std::endl;
@@ -106,6 +110,9 @@ Outlet* WebPowerSwitchManager::getOutletByName(std::string name) {
 }
 
 void WebPowerSwitchManager::dumpSwitches(std::ostream& ostr) {
+  if (verbose_ > 2) {
+    std::cerr << "DEBUG: WebPowerSwitchManager::dumpSwitches called" << std::endl;
+  }
   if (load() == false) {
     std::cerr << "no switches found or able to load" << std::endl;
     return;
@@ -153,34 +160,50 @@ bool WebPowerSwitchManager::validateCacheFile() {
 
 void WebPowerSwitchManager::loadCache() {
   if (enableCache_ == false) {
+    if (verbose_ > 2) {
+      std::cerr << "DEBUG: enableCache_: " << enableCache_ << std::endl;
+    }
     return;
   }
   if (resetCache_) {
+    if (verbose_ > 2) {
+      std::cerr << "DEBUG: resetCache_: " << resetCache_ << std::endl;
+    }
     resetCache_ = false;
     return;
   }
   if (validateCacheFile() == false) {
+    if (verbose_ > 2) {
+      std::cerr << "DEBUG: validateCacheFile failed" << std::endl;
+    }
     return;
   }
   struct stat statCacheFile;
   auto statRetval = stat(cacheFile_.c_str(), &statCacheFile);
   if (statRetval != 0) {
+    if (verbose_ > 2) {
+      std::cerr << "DEBUG: cache file does not exist (or is not readable): "
+                << cacheFile_ << std::endl;
+    }
     return;
   }
   auto tooOld = time(nullptr) - cacheTimeout_;
   if (statCacheFile.st_mtime <= tooOld) {
+    if (verbose_ > 2) {
+      std::cerr << "DEBUG: cache file is too old : " << cacheFile_ << std::endl;
+    }
     return;
   }
 
   auto fd = open(cacheFile_.c_str(), O_RDONLY);
   if (fd < 0) {
-    std::cerr << "failed to open cache: " << cacheFile_ << std::endl;
+    std::cerr << "ERROR: failed to open cache: " << cacheFile_ << std::endl;
     return;
   }
   auto r = flock(fd, LOCK_SH | LOCK_NB);
   if (r < 0) {
-    std::cerr << "failed to obtain read lock: " << cacheFile_ << "(" << errno
-              << ": " << strerror(errno) << ")" << std::endl;
+    std::cerr << "ERROR: failed to obtain read lock: " << cacheFile_ << " ("
+              << errno << ": " << strerror(errno) << ")" << std::endl;
     close(fd);
     return;
   }
@@ -197,7 +220,10 @@ void WebPowerSwitchManager::loadCache() {
   try {
     cache_ = YAML::Load(ss.str());
   } catch (...) {
-    std::cerr << "failed to load cache: " << cacheFile_ << std::endl;
+    std::cerr << "ERROR: failed to load cache: " << cacheFile_ << std::endl;
+  }
+  if (verbose_ > 2) {
+    std::cerr << "DEBUG: isCacheLoaded(): " << isCacheLoaded() << std::endl;
   }
 }
 
@@ -209,9 +235,15 @@ void WebPowerSwitchManager::writeCacheStart() {
     return;
   }
   fdWrite_ = open(cacheFile_.c_str(), O_CREAT | O_WRONLY | O_TRUNC, 0777);
+  if (fdWrite_ < 0) {
+    std::cerr << "ERROR: failed to open for writing cache file: " << cacheFile_
+              << " (" << errno << ": " << strerror(errno) << ")" << std::endl;
+    return;
+  }
   auto r = flock(fdWrite_, LOCK_EX | LOCK_NB);
   if (r < 0) {
-    std::cerr << "failed to obtain write lock: " << cacheFile_ << std::endl;
+    std::cerr << "ERROR: failed to obtain write lock: " << cacheFile_ << " ("
+              << errno << ": " << strerror(errno) << ")" << std::endl;
     close(fdWrite_);
     return;
   }
