@@ -56,6 +56,9 @@ void WebPowerSwitchManager::resetCache() {
 
 WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_miss) {
   if (load() == false) {
+    if (verbose_ > 3) {
+      std::cerr << "DEBUG: load() failed in getSwitch" << std::endl;
+    }
     return nullptr;
   }
   auto iter = mNameToSwitch_.find(name);
@@ -176,7 +179,8 @@ void WebPowerSwitchManager::loadCache() {
   }
   auto r = flock(fd, LOCK_SH | LOCK_NB);
   if (r < 0) {
-    std::cerr << "failed to obtain write lock: " << cacheFile_ << std::endl;
+    std::cerr << "failed to obtain read lock: " << cacheFile_ << "(" << errno
+              << ": " << strerror(errno) << ")" << std::endl;
     close(fd);
     return;
   }
