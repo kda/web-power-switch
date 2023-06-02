@@ -6,6 +6,7 @@
 #include <tidy/tidybuffio.h>
 #include <unordered_map>
 
+#include "md5Helper.h"
 #include "tidyHelper.h"
 #include "tidydocwrapper.h"
 #include "trim.h"
@@ -222,11 +223,12 @@ CURL* WebPowerSwitch::next() {
     // create password
     auto passphrase = challenge + username_ + password_ + challenge;
     //std::cout << "passphrase: " << passphrase << std::endl;
-    unsigned char md5digest[MD5_DIGEST_LENGTH + 1];
-    MD5(reinterpret_cast<const unsigned char *>(passphrase.c_str()), passphrase.length(), md5digest);
+    std::vector<unsigned char> md5digest = md5Helper::calculate(
+        reinterpret_cast<const unsigned char*>(passphrase.c_str()),
+        passphrase.length());
     std::ostringstream osDigest;
-    for (int i = 0; i < MD5_DIGEST_LENGTH; i++) {
-      osDigest << std::setfill('0') << std::setw(2) << std::hex << (int)md5digest[i];
+    for (unsigned char uc : md5digest) {
+      osDigest << std::setfill('0') << std::setw(2) << std::hex << (int)uc;
     }
     //std::cout << "md5digest: " << osDigest.str() << std::endl;
     std::unordered_map<std::string, std::string> postFields;

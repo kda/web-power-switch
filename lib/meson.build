@@ -1,4 +1,5 @@
 wps_sources = [
+  'md5Helper.cc',
   'tidyHelper.cc',
   'tidydocwrapper.cc',
   'trim.cc',
