@@ -1,7 +1,6 @@
 #include "webpowerswitch.h"
 
 #include <iostream>
-#include <openssl/md5.h>
 #include <string.h>
 #include <tidy/tidybuffio.h>
 #include <unordered_map>
