@@ -12,8 +12,6 @@
 #include <unistd.h>
 
 
-// TODO: remove this line, as it is not used
-const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERS = "controllers";
 const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERBYNAME = "controller_by_name";
 const char* WebPowerSwitchManager::CACHE_CONTROLLERBYNAME_KEY_HOST = "host";
 const char* WebPowerSwitchManager::CACHE_KEY_OUTLETS = "outlets";

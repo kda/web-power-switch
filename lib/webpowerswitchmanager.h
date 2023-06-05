@@ -37,7 +37,6 @@ private:
   std::vector<UsernamePassword> vUsernamePassword_;
   std::string cacheFile_ = {};
   YAML::Node cache_;
-  static const char* CACHE_KEY_CONTROLLERS;
   static const char* CACHE_KEY_CONTROLLERBYNAME;
   static const char* CACHE_CONTROLLERBYNAME_KEY_HOST;
   static const char* CACHE_KEY_OUTLETS;
