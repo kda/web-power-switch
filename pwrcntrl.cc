@@ -125,6 +125,12 @@ int main(int iArgc, char* szArgv[]) {
     return 0;
   }
 
+  wps = wpsm->getSwitchByIp(target, true);
+  if (wps != nullptr) {
+    wps->dumpOutlets(std::cout);
+    return 0;
+  }
+
   wps = wpsm->getSwitchByOutletName(target);
   if (wps == nullptr) {
     std::cout << "unknown outlet (or switch): " << target << std::endl;

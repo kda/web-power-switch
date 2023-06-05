@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 
+// TODO: remove this line, as it is not used
 const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERS = "controllers";
 const char* WebPowerSwitchManager::CACHE_KEY_CONTROLLERBYNAME = "controller_by_name";
 const char* WebPowerSwitchManager::CACHE_CONTROLLERBYNAME_KEY_HOST = "host";
@@ -40,7 +41,7 @@ bool WebPowerSwitchManager::load() {
   if (isCacheLoaded() == false) {
     writeCacheStart();
     findSwitches();
-    // walk added switches to extend cache
+    // TODO: walk added switches to extend cache
     writeCacheFinish();
   }
 
@@ -66,6 +67,7 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_mi
     return nullptr;
   }
   auto iter = mNameToSwitch_.find(name);
+  // TODO: invert logic
   if (iter == mNameToSwitch_.end()) {
     if (!cache_[CACHE_KEY_CONTROLLERBYNAME][name]) {
       if (allow_miss == false) {
@@ -73,21 +75,42 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_mi
       }
       return nullptr;
     }
-    auto wps = std::make_unique<WebPowerSwitch>(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
-    wps->verbose(verbose_);
-    for (auto up : vUsernamePassword_) {
-      if (wps->login(up.username, up.password)) {
-        break;
-      }
-    }
-    if (wps->isLoggedIn() == false) {
-      std::cerr << "ERROR: login failed switch name: " << name << std::endl;
-      return nullptr;
-    }
-    mNameToSwitch_[name].reset(wps.release());
-    iter = mNameToSwitch_.find(name);
+
+    return connectSwitch(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
   }
   return iter->second.get();
+}
+
+WebPowerSwitch* WebPowerSwitchManager::getSwitchByIp(std::string_view ip, bool allow_miss) {
+  if (verbose_ > 2) {
+    std::cerr << "DEBUG: WebPowerSwitchManager::getSwitchByIp(" << ip << ", "
+              << allow_miss << ") called" << std::endl;
+  }
+  if (load() == false) {
+    if (verbose_ > 3) {
+      std::cerr << "DEBUG: load() failed in getSwitchByIp" << std::endl;
+    }
+    return nullptr;
+  }
+
+  // Search cache
+  if (cache_[CACHE_KEY_CONTROLLERBYNAME]) {
+    for (auto controller : cache_[CACHE_KEY_CONTROLLERBYNAME]) {
+      if (verbose_ > 1) {
+        std::cerr << "DEBUG: controller name: "
+                  << controller.first.as<std::string>() << " host: "
+                  << controller.second[CACHE_CONTROLLERBYNAME_KEY_HOST]
+                         .as<std::string>()
+                  << std::endl;
+      }
+      if (controller.second[CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>() == ip) {
+        return getSwitch(controller.first.as<std::string>(), allow_miss);
+      }
+    }
+  }
+
+  // Open based on IP
+  return connectSwitch(ip);
 }
 
 WebPowerSwitch* WebPowerSwitchManager::getSwitchByOutletName(std::string name) {
@@ -441,4 +464,21 @@ void WebPowerSwitchManager::getIpAddressAndSubnetMask(std::string interface, std
   }
 
   freeifaddrs(ifap);
+}
+
+WebPowerSwitch* WebPowerSwitchManager::connectSwitch(std::string_view ip) {
+  auto wps = std::make_unique<WebPowerSwitch>(std::string(ip));
+  wps->verbose(verbose_);
+  for (auto up : vUsernamePassword_) {
+    if (wps->login(up.username, up.password)) {
+      break;
+    }
+  }
+  if (wps->isLoggedIn() == false) {
+    std::cerr << "ERROR: login failed switch ip: " << ip << std::endl;
+    return nullptr;
+  }
+  std::string name = wps->name();
+  mNameToSwitch_[name].reset(wps.release());
+  return mNameToSwitch_.find(name)->second.get();
 }

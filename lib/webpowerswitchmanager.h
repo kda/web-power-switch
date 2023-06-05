@@ -17,6 +17,7 @@ public:
   bool load();
   void resetCache();
   WebPowerSwitch* getSwitch(std::string name, bool allow_miss = false);
+  WebPowerSwitch* getSwitchByIp(std::string_view ip, bool allow_miss = false);
   WebPowerSwitch* getSwitchByOutletName(std::string name);
   Outlet* getOutletByName(std::string name);
   void dumpSwitches(std::ostream& ostr);
@@ -54,8 +55,7 @@ private:
   void findSwitches();
   std::string getDefaultInterface();
   void getIpAddressAndSubnetMask(std::string interface, std::string& ipAddress, std::string& subNetMask);
+  WebPowerSwitch* connectSwitch(std::string_view ip);
 };
-
-
 
 #endif  /*  __WEBPOWERSWITCHMANAGER_H__INCLUDED__  */
