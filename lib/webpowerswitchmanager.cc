@@ -471,7 +471,9 @@ WebPowerSwitch* WebPowerSwitchManager::connectSwitch(absl::string_view ip) {
     }
   }
   if (wps->isLoggedIn() == false) {
-    std::cerr << "ERROR: login failed switch ip: " << ip << std::endl;
+    if (verbose_ > 0) {
+      std::cerr << "ERROR: login failed switch ip: " << ip << std::endl;
+    }
     return nullptr;
   }
   std::string name(wps->name());
