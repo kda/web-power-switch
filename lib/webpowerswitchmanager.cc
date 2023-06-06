@@ -65,18 +65,16 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_mi
     return nullptr;
   }
   auto iter = mNameToSwitch_.find(name);
-  // TODO: invert logic
-  if (iter == mNameToSwitch_.end()) {
-    if (!cache_[CACHE_KEY_CONTROLLERBYNAME][name]) {
-      if (allow_miss == false) {
-        std::cerr << "ERROR: unknown switch name: " << name << std::endl;
-      }
-      return nullptr;
-    }
-
-    return connectSwitch(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
+  if (iter != mNameToSwitch_.end()) {
+    return iter->second.get();
   }
-  return iter->second.get();
+  if (!cache_[CACHE_KEY_CONTROLLERBYNAME][name]) {
+    if (allow_miss == false) {
+      std::cerr << "ERROR: unknown switch name: " << name << std::endl;
+    }
+    return nullptr;
+  }
+  return connectSwitch(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
 }
 
 WebPowerSwitch* WebPowerSwitchManager::getSwitchByIp(absl::string_view ip, bool allow_miss) {
