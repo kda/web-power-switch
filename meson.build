@@ -1,7 +1,8 @@
 project('web-power-switch', 'cpp',
-  version : '0.1',
+  version : '0.2',
   default_options : ['warning_level=3', 'cpp_std=c++17'])
 
+absl_strings_dep = dependency('absl_strings')
 libcrypto_dep = dependency('libcrypto')
 libcurl_dep = dependency('libcurl')
 libssl_dep = dependency('libssl')
@@ -20,6 +21,7 @@ executable('pwrcntrl',
            'pwrcntrl.cc',
            include_directories : wps_inc,
            dependencies : [
+                          absl_strings_dep,
                           cxxopts_dep,
                           libcrypto_dep,
                           libcurl_dep,

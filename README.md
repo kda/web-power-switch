@@ -6,8 +6,8 @@ Features:
 
 Build
 
-  - sudo apt install cmake libtidy-dev libyaml-cpp-dev libcurl4-gnutls-dev libssl-dev
-  - meson build
+  - sudo apt install cmake libtidy-dev libyaml-cpp-dev libcurl4-gnutls-dev libssl-dev libabsl-dev
+  - meson setup build
   - ninja -C build
 
 Mostly works on ubuntu and raspios.

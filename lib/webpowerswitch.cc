@@ -1,5 +1,6 @@
 #include "webpowerswitch.h"
 
+#include <absl/strings/str_cat.h>
 #include <iostream>
 #include <string.h>
 #include <tidy/tidybuffio.h>
@@ -103,7 +104,7 @@ int my_trace(CURL *handle, curl_infotype type,
   return 0;
 }
 
-WebPowerSwitch::WebPowerSwitch(std::string host)
+WebPowerSwitch::WebPowerSwitch(absl::string_view host)
   : host_(host) {
 }
 
@@ -111,7 +112,7 @@ WebPowerSwitch::~WebPowerSwitch() {
   logout();
 }
 
-bool WebPowerSwitch::login(std::string username, std::string password) {
+bool WebPowerSwitch::login(absl::string_view username, absl::string_view password) {
   // first page
   auto request = startLogin(username, password);
   while (request != nullptr && curl_easy_perform(request) == CURLE_OK) {
@@ -120,7 +121,7 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
   return isLoggedIn();
 }
 
-CURL* WebPowerSwitch::startLogin(std::string username, std::string password) {
+CURL* WebPowerSwitch::startLogin(absl::string_view username, absl::string_view password) {
   if (loggedIn_) {
     return nullptr;
   }
@@ -131,8 +132,8 @@ CURL* WebPowerSwitch::startLogin(std::string username, std::string password) {
     return nullptr;
   }
 
-  username_ = username;
-  password_ = password;
+  username_ = std::string(username);
+  password_ = std::string(password);
 
   // Create Share
   share_ = curl_share_init();
@@ -144,7 +145,7 @@ CURL* WebPowerSwitch::startLogin(std::string username, std::string password) {
   // Fetch
   initializeRequest();
 
-  curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host()).c_str());
+  curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host()).c_str());
   //curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
   curl_easy_setopt(request_, CURLOPT_TIMEOUT, CURL_TIMEOUT);
   if (verbose_ > 2) {
@@ -236,7 +237,7 @@ CURL* WebPowerSwitch::next() {
 
     initializeRequest();
 
-    curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() + action).c_str());
+    curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host(), action).c_str());
     curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
     curl_easy_setopt(request_, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(request_, CURLOPT_SHARE, share_);
@@ -427,7 +428,7 @@ void WebPowerSwitch::prepToFetchOutlets() {
   outlets_.clear();
 
   initializeRequest();
-  curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() + "/index.htm").c_str());
+  curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host(), "/index.htm").c_str());
   //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() + "/").c_str());
   curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
   curl_easy_setopt(request_, CURLOPT_COOKIEFILE, "");
@@ -467,7 +468,7 @@ void WebPowerSwitch::dumpOutlets(std::ostream& ostr) {
   }
 }
 
-Outlet* WebPowerSwitch::getOutlet(const std::string& name) {
+Outlet* WebPowerSwitch::getOutlet(absl::string_view name) {
   for (auto outletIter = outlets_.begin(); outletIter != outlets_.end(); outletIter++) {
     if (outletIter->name() == name) {
       return &(*outletIter);
@@ -476,7 +477,7 @@ Outlet* WebPowerSwitch::getOutlet(const std::string& name) {
   return nullptr;
 }
 
-bool WebPowerSwitch::on(const std::string& outletName) {
+bool WebPowerSwitch::on(absl::string_view outletName) {
   auto ol = getOutlet(outletName);
   if (ol->state() == OUTLET_STATE_ON) {
     return true;
@@ -484,7 +485,7 @@ bool WebPowerSwitch::on(const std::string& outletName) {
   return setState(ol, OUTLET_STATE_ON);
 }
 
-bool WebPowerSwitch::off(const std::string& outletName) {
+bool WebPowerSwitch::off(absl::string_view outletName) {
   auto ol = getOutlet(outletName);
   if (ol->state() == OUTLET_STATE_OFF) {
     return true;
@@ -492,7 +493,7 @@ bool WebPowerSwitch::off(const std::string& outletName) {
   return setState(ol, OUTLET_STATE_OFF);
 }
 
-bool WebPowerSwitch::toggle(const std::string& outletName) {
+bool WebPowerSwitch::toggle(absl::string_view outletName) {
   auto ol = getOutlet(outletName);
   return setState(ol, ol->state() == OUTLET_STATE_ON ? OUTLET_STATE_OFF : OUTLET_STATE_ON);
 }

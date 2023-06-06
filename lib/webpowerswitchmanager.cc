@@ -25,8 +25,8 @@ WebPowerSwitchManager::WebPowerSwitchManager(bool enableCache, bool findSwitches
 WebPowerSwitchManager::~WebPowerSwitchManager() {
 }
 
-bool WebPowerSwitchManager::addUsernamePassword(std::string username, std::string password) {
-  vUsernamePassword_.push_back({username, password});
+bool WebPowerSwitchManager::addUsernamePassword(absl::string_view username, absl::string_view password) {
+  vUsernamePassword_.push_back({std::string(username), std::string(password)});
   return true;
 }
 
@@ -79,7 +79,7 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_mi
   return iter->second.get();
 }
 
-WebPowerSwitch* WebPowerSwitchManager::getSwitchByIp(std::string_view ip, bool allow_miss) {
+WebPowerSwitch* WebPowerSwitchManager::getSwitchByIp(absl::string_view ip, bool allow_miss) {
   if (verbose_ > 2) {
     std::cerr << "DEBUG: WebPowerSwitchManager::getSwitchByIp(" << ip << ", "
               << allow_miss << ") called" << std::endl;
@@ -411,16 +411,16 @@ void WebPowerSwitchManager::findSwitches() {
         if (verbose_ > 1) {
           std::cout << "outlet: " << outlet << std::endl;
         }
-        outletsCache[outlet.name()][CACHE_OUTLETS_KEY_CONTROLLER] = wps->name();
-        outletsCache[outlet.name()][CACHE_OUTLETS_KEY_ID] = outlet.id();
+        outletsCache[std::string(outlet.name())][CACHE_OUTLETS_KEY_CONTROLLER] = std::string(wps->name());
+        outletsCache[std::string(outlet.name())][CACHE_OUTLETS_KEY_ID] = outlet.id();
       }
-      cache_[CACHE_KEY_CONTROLLERBYNAME][wps->name()][CACHE_CONTROLLERBYNAME_KEY_HOST] = wps->host();
-      mNameToSwitch_[wps->name()].reset(wps.release());
+      cache_[CACHE_KEY_CONTROLLERBYNAME][std::string(wps->name())][CACHE_CONTROLLERBYNAME_KEY_HOST] = std::string(wps->host());
+      mNameToSwitch_[std::string(wps->name())].reset(wps.release());
     }
   }
 }
 
-std::string WebPowerSwitchManager::getDefaultInterface() {
+absl::string_view WebPowerSwitchManager::getDefaultInterface() {
   static const char* ROUTE_FILENAME = "/proc/net/route";
   std::fstream routes(ROUTE_FILENAME, std::ios::in);
   const size_t BUFSIZE = 1024;
@@ -435,7 +435,7 @@ std::string WebPowerSwitchManager::getDefaultInterface() {
   return "";
 } 
 
-void WebPowerSwitchManager::getIpAddressAndSubnetMask(std::string interface, std::string& ipAddress, std::string& subNetMask) {
+void WebPowerSwitchManager::getIpAddressAndSubnetMask(absl::string_view interface, std::string& ipAddress, std::string& subNetMask) {
   struct ifaddrs* ifap;
   if (getifaddrs(&ifap) != 0) {
     std::cout << "getifaddrs failed: " << errno << " " << strerror(errno) << std::endl;
@@ -449,7 +449,7 @@ void WebPowerSwitchManager::getIpAddressAndSubnetMask(std::string interface, std
     if (ifa->ifa_addr->sa_family != AF_INET) {
       continue;
     }
-    if (strncmp(ifa->ifa_name, interface.c_str(), strlen(ifa->ifa_name)) == 0) {
+    if (strncmp(ifa->ifa_name, interface.data(), strlen(ifa->ifa_name)) == 0) {
       char extractedIpAddress[NI_MAXHOST];
       getnameinfo(ifa->ifa_addr,
         (ifa->ifa_addr->sa_family == AF_INET) ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6),
@@ -464,8 +464,8 @@ void WebPowerSwitchManager::getIpAddressAndSubnetMask(std::string interface, std
   freeifaddrs(ifap);
 }
 
-WebPowerSwitch* WebPowerSwitchManager::connectSwitch(std::string_view ip) {
-  auto wps = std::make_unique<WebPowerSwitch>(std::string(ip));
+WebPowerSwitch* WebPowerSwitchManager::connectSwitch(absl::string_view ip) {
+  auto wps = std::make_unique<WebPowerSwitch>(ip);
   wps->verbose(verbose_);
   for (auto up : vUsernamePassword_) {
     if (wps->login(up.username, up.password)) {
@@ -476,7 +476,7 @@ WebPowerSwitch* WebPowerSwitchManager::connectSwitch(std::string_view ip) {
     std::cerr << "ERROR: login failed switch ip: " << ip << std::endl;
     return nullptr;
   }
-  std::string name = wps->name();
+  std::string name(wps->name());
   mNameToSwitch_[name].reset(wps.release());
   return mNameToSwitch_.find(name)->second.get();
 }
