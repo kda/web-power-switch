@@ -55,6 +55,7 @@ private:
   absl::string_view getDefaultInterface();
   void getIpAddressAndSubnetMask(absl::string_view interface, std::string& ipAddress, std::string& subNetMask);
   WebPowerSwitch* connectSwitch(absl::string_view ip);
+  void addSwitchToCache(std::unique_ptr<WebPowerSwitch>&& wps);
 };
 
 #endif  /*  __WEBPOWERSWITCHMANAGER_H__INCLUDED__  */

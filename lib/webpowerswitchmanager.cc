@@ -39,7 +39,6 @@ bool WebPowerSwitchManager::load() {
   if (isCacheLoaded() == false) {
     writeCacheStart();
     findSwitches();
-    // TODO: walk added switches to extend cache
     writeCacheFinish();
   }
 
@@ -400,21 +399,7 @@ void WebPowerSwitchManager::findSwitches() {
 
   // parse the successes
   for (auto & wps : switches) {
-    if (wps->isLoggedIn()) {
-      if (verbose_) {
-        std::cout << "host: " << wps->host() << " name: " << wps->name() << std::endl;
-      }
-      auto outletsCache = cache_[CACHE_KEY_OUTLETS];
-      for (auto outlet : wps->outlets()) {
-        if (verbose_ > 1) {
-          std::cout << "outlet: " << outlet << std::endl;
-        }
-        outletsCache[std::string(outlet.name())][CACHE_OUTLETS_KEY_CONTROLLER] = std::string(wps->name());
-        outletsCache[std::string(outlet.name())][CACHE_OUTLETS_KEY_ID] = outlet.id();
-      }
-      cache_[CACHE_KEY_CONTROLLERBYNAME][std::string(wps->name())][CACHE_CONTROLLERBYNAME_KEY_HOST] = std::string(wps->host());
-      mNameToSwitch_[std::string(wps->name())].reset(wps.release());
-    }
+    addSwitchToCache(std::move(wps));
   }
 }
 
@@ -476,7 +461,29 @@ WebPowerSwitch* WebPowerSwitchManager::connectSwitch(absl::string_view ip) {
     }
     return nullptr;
   }
+
+  // Store the name, so the pointer can be sent back from the map.
   std::string name(wps->name());
-  mNameToSwitch_[name].reset(wps.release());
+  writeCacheStart();
+  addSwitchToCache(std::move(wps));
+  writeCacheFinish();
   return mNameToSwitch_.find(name)->second.get();
+}
+
+void WebPowerSwitchManager::addSwitchToCache(std::unique_ptr<WebPowerSwitch>&& wps) {
+  if (wps->isLoggedIn()) {
+    if (verbose_) {
+      std::cout << "host: " << wps->host() << " name: " << wps->name() << std::endl;
+    }
+    auto outletsCache = cache_[CACHE_KEY_OUTLETS];
+    for (auto outlet : wps->outlets()) {
+      if (verbose_ > 1) {
+        std::cout << "outlet: " << outlet << std::endl;
+      }
+      outletsCache[std::string(outlet.name())][CACHE_OUTLETS_KEY_CONTROLLER] = std::string(wps->name());
+      outletsCache[std::string(outlet.name())][CACHE_OUTLETS_KEY_ID] = outlet.id();
+    }
+    cache_[CACHE_KEY_CONTROLLERBYNAME][std::string(wps->name())][CACHE_CONTROLLERBYNAME_KEY_HOST] = std::string(wps->host());
+    mNameToSwitch_[std::string(wps->name())].reset(wps.release());
+  }
 }
