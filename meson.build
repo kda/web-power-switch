@@ -5,16 +5,13 @@ project('web-power-switch', 'cpp',
 cmake = import('cmake')
 
 absl_strings_dep = dependency('absl_strings', fallback : ['abseil-cpp', 'absl_strings_dep'])
-libcxxopts_dep = dependency('cxxopts', fallback : ['cxxopts', 'cxxopts_dep'])
+libcxxopts_dep = dependency('cxxopts', version : '>=3.0.0', fallback : ['cxxopts', 'cxxopts_dep'])
 
 libcrypto_dep = dependency('libcrypto')
 libcurl_dep = dependency('libcurl')
 libssl_dep = dependency('libssl')
 tidy_dep = dependency('tidy')
 yamlcpp_dep = dependency('yaml-cpp')
-
-#cxxopts_proj = cmake.subproject('cxxopts')
-#cxxopts_dep = cxxopts_proj.dependency('cxxopts')
 
 wps_inc = include_directories('lib')
 subdir('lib')
