@@ -1,6 +1,7 @@
 #ifndef __WEBPOWERSWITCHMANAGER_H__INCLUDED__
 #define __WEBPOWERSWITCHMANAGER_H__INCLUDED__
 
+#include <absl/strings/string_view.h>
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
 
