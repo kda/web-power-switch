@@ -25,7 +25,7 @@ WebPowerSwitchManager::WebPowerSwitchManager(bool enableCache, bool findSwitches
 WebPowerSwitchManager::~WebPowerSwitchManager() {
 }
 
-bool WebPowerSwitchManager::addUsernamePassword(absl::string_view username, absl::string_view password) {
+bool WebPowerSwitchManager::addUsernamePassword(std::string username, std::string password) {
   vUsernamePassword_.push_back({std::string(username), std::string(password)});
   return true;
 }
@@ -76,7 +76,7 @@ WebPowerSwitch* WebPowerSwitchManager::getSwitch(std::string name, bool allow_mi
   return connectSwitch(cache_[CACHE_KEY_CONTROLLERBYNAME][name][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>());
 }
 
-WebPowerSwitch* WebPowerSwitchManager::getSwitchByIp(absl::string_view ip, bool allow_miss) {
+WebPowerSwitch* WebPowerSwitchManager::getSwitchByIp(std::string ip, bool allow_miss) {
   if (verbose_ > 2) {
     std::cerr << "DEBUG: WebPowerSwitchManager::getSwitchByIp(" << ip << ", "
               << allow_miss << ") called" << std::endl;
@@ -403,7 +403,7 @@ void WebPowerSwitchManager::findSwitches() {
   }
 }
 
-absl::string_view WebPowerSwitchManager::getDefaultInterface() {
+std::string WebPowerSwitchManager::getDefaultInterface() {
   static const char* ROUTE_FILENAME = "/proc/net/route";
   std::fstream routes(ROUTE_FILENAME, std::ios::in);
   const size_t BUFSIZE = 1024;
@@ -418,7 +418,7 @@ absl::string_view WebPowerSwitchManager::getDefaultInterface() {
   return "";
 } 
 
-void WebPowerSwitchManager::getIpAddressAndSubnetMask(absl::string_view interface, std::string& ipAddress, std::string& subNetMask) {
+void WebPowerSwitchManager::getIpAddressAndSubnetMask(std::string interface, std::string& ipAddress, std::string& subNetMask) {
   struct ifaddrs* ifap;
   if (getifaddrs(&ifap) != 0) {
     std::cout << "getifaddrs failed: " << errno << " " << strerror(errno) << std::endl;
@@ -447,7 +447,7 @@ void WebPowerSwitchManager::getIpAddressAndSubnetMask(absl::string_view interfac
   freeifaddrs(ifap);
 }
 
-WebPowerSwitch* WebPowerSwitchManager::connectSwitch(absl::string_view ip) {
+WebPowerSwitch* WebPowerSwitchManager::connectSwitch(std::string ip) {
   auto wps = std::make_unique<WebPowerSwitch>(ip);
   wps->verbose(verbose_);
   for (auto up : vUsernamePassword_) {

@@ -4,7 +4,6 @@ project('web-power-switch', 'cpp',
 
 cmake = import('cmake')
 
-absl_strings_dep = dependency('absl_strings', fallback : ['abseil-cpp', 'absl_strings_dep'])
 libcxxopts_dep = dependency('cxxopts', version : '>=3.0.0', fallback : ['cxxopts', 'cxxopts_dep'])
 
 libcrypto_dep = dependency('libcrypto')
@@ -21,7 +20,6 @@ executable('pwrcntrl',
            'pwrcntrl.cc',
            include_directories : wps_inc,
            dependencies : [
-                          absl_strings_dep,
                           libcxxopts_dep,
                           libcrypto_dep,
                           libcurl_dep,

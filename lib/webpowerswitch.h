@@ -1,7 +1,6 @@
 #ifndef __WEBPOWERSWITCH_H__INCLUDED__
 #define __WEBPOWERSWITCH_H__INCLUDED__
 
-#include <absl/strings/string_view.h>
 #include <curl/curl.h>
 #include <iomanip>
 #include <vector>
@@ -17,13 +16,13 @@ class Outlet {
 public:
   Outlet() {
   }
-  Outlet(int id, absl::string_view name, OutletState state)
+  Outlet(int id, std::string name, OutletState state)
   : id_(id), name_(name), state_(state) {
   }
   int id() const {
     return id_;
   }
-  absl::string_view name() const {
+  std::string name() const {
     return name_;
   }
   OutletState state() const {
@@ -48,27 +47,27 @@ private:
 
 class WebPowerSwitch {
 public:
-  WebPowerSwitch(absl::string_view host);
+  WebPowerSwitch(std::string host);
   WebPowerSwitch(const WebPowerSwitch&) = delete;
   virtual ~WebPowerSwitch();
   void suppressDetectionErrors() {
     suppressDetectionErrors_ = true;
   }
-  bool login(absl::string_view username, absl::string_view password);
-  CURL* startLogin(absl::string_view username, absl::string_view password);
+  bool login(std::string username, std::string password);
+  CURL* startLogin(std::string username, std::string password);
   CURL* next();
   void logout();
   bool isLoggedIn() const {
     return loggedIn_;
   }
   void dumpOutlets(std::ostream& ostr);
-  absl::string_view host() const {
+  std::string host() const {
     return host_;
   }
   CURL* handle() {
     return request_;
   }
-  absl::string_view name() const {
+  std::string name() const {
     if (loggedIn_ == false) {
       return "===not_logged_in===";
     }
@@ -77,10 +76,10 @@ public:
   const std::vector<Outlet>& outlets() const {
     return outlets_;
   }
-  Outlet* getOutlet(absl::string_view name);
-  bool on(absl::string_view outletName);
-  bool off(absl::string_view outletName);
-  bool toggle(absl::string_view outletName);
+  Outlet* getOutlet(std::string name);
+  bool on(std::string outletName);
+  bool off(std::string outletName);
+  bool toggle(std::string outletName);
   void verbose(int increment = 1) {
     verbose_ += increment;
   }

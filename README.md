@@ -6,7 +6,7 @@ Features:
 
 Build
 
-  - sudo apt install cmake libtidy-dev libyaml-cpp-dev libcurl4-gnutls-dev libssl-dev libabsl-dev libcxxopts-dev
+  - sudo apt install cmake libtidy-dev libyaml-cpp-dev libcurl4-gnutls-dev libssl-dev libcxxopts-dev
   - (optional) meson wrap update-db
   - meson setup build
   - ninja -C build
