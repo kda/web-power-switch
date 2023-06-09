@@ -7,8 +7,11 @@ wps_sources = [
   'webpowerswitchmanager.cc',
   ]
 
-wpslib = static_library(
+wps_inc = include_directories('.')
+
+wps_lib = static_library(
     'wps',
     wps_sources,
+    include_directories : [abseil_inc],
     )
 

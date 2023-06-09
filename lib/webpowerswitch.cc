@@ -104,7 +104,7 @@ int my_trace(CURL *handle, curl_infotype type,
   return 0;
 }
 
-WebPowerSwitch::WebPowerSwitch(std::string host)
+WebPowerSwitch::WebPowerSwitch(absl::string_view host)
   : host_(host) {
 }
 
@@ -145,7 +145,8 @@ CURL* WebPowerSwitch::startLogin(std::string username, std::string password) {
   // Fetch
   initializeRequest();
 
-  curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host()).c_str());
+  //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host()).c_str());
+  curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host()).c_str());
   //curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
   curl_easy_setopt(request_, CURLOPT_TIMEOUT, CURL_TIMEOUT);
   if (verbose_ > 2) {
@@ -237,7 +238,8 @@ CURL* WebPowerSwitch::next() {
 
     initializeRequest();
 
-    curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() + action).c_str());
+    //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() + action).c_str());
+    curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host(), action).c_str());
     curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
     curl_easy_setopt(request_, CURLOPT_COOKIEFILE, "");
     curl_easy_setopt(request_, CURLOPT_SHARE, share_);
@@ -428,7 +430,8 @@ void WebPowerSwitch::prepToFetchOutlets() {
   outlets_.clear();
 
   initializeRequest();
-  curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() +  "/index.htm").c_str());
+  //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() +  "/index.htm").c_str());
+  curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host(),  "/index.htm").c_str());
   //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() + "/").c_str());
   curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
   curl_easy_setopt(request_, CURLOPT_COOKIEFILE, "");

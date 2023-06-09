@@ -1,6 +1,7 @@
 #ifndef __WEBPOWERSWITCH_H__INCLUDED__
 #define __WEBPOWERSWITCH_H__INCLUDED__
 
+#include <absl/strings/string_view.h>
 #include <curl/curl.h>
 #include <iomanip>
 #include <vector>
@@ -47,7 +48,7 @@ private:
 
 class WebPowerSwitch {
 public:
-  WebPowerSwitch(std::string host);
+  WebPowerSwitch(absl::string_view host);
   WebPowerSwitch(const WebPowerSwitch&) = delete;
   virtual ~WebPowerSwitch();
   void suppressDetectionErrors() {
@@ -61,7 +62,7 @@ public:
     return loggedIn_;
   }
   void dumpOutlets(std::ostream& ostr);
-  std::string host() const {
+  absl::string_view host() const {
     return host_;
   }
   CURL* handle() {
