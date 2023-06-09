@@ -3,7 +3,7 @@ project('web-power-switch', 'cpp',
   meson_version : '>=0.65.0',
   default_options : [
     'warning_level=3',
-    'cpp_std=c++17',
+    'cpp_std=c++14',
     ])
 
 # create empty default if installed version is new enough
