@@ -9,6 +9,7 @@ project('web-power-switch', 'cpp',
 # create empty default if installed version is new enough
 abseil_inc = include_directories()
 
+# TODO: migrate to lib/meson.build (since that is where it is first used and needs to be present for users of lib
 absl_strings_dep = dependency('absl_strings', version : '>=20220623', required : false)
 if not absl_strings_dep.found()
   abseil_proj = subproject('abseil-cpp', required : false)
