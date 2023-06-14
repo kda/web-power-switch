@@ -5,7 +5,7 @@
 
 namespace tidyHelper {
 
-TidyNode findNode(TidyNode tnod, const std::string& name, TidyNode& prevNode) {
+TidyNode findNode(TidyNode tnod, absl::string_view name, TidyNode& prevNode) {
   if (tnod == nullptr)
     return nullptr;
   //std::cout << "findNode: " << name << std::endl;
@@ -15,7 +15,7 @@ TidyNode findNode(TidyNode tnod, const std::string& name, TidyNode& prevNode) {
     auto nodeName = tidyNodeGetName(child);
     if (nodeName != nullptr) {
       //std::cout << "nodeName: " << nodeName << std::endl;
-      if (strncasecmp(nodeName, name.c_str(), strlen(nodeName)) == 0) {
+      if (strncasecmp(nodeName, name.data(), strlen(nodeName)) == 0) {
         if (prevNode == nullptr) {
           return child;
         }
@@ -33,12 +33,12 @@ TidyNode findNode(TidyNode tnod, const std::string& name, TidyNode& prevNode) {
   return nullptr;
 }
 
-TidyNode findNode(TidyDoc tdoc, const std::string& name, TidyNode prevNode) {
+TidyNode findNode(TidyDoc tdoc, absl::string_view name, TidyNode prevNode) {
   return findNode(tidyGetRoot(tdoc), name, prevNode);
 }
 
-TidyNode findNodeByAttr(TidyDoc tdoc, const std::string& name,
-                        TidyAttrId attrId, const std::string& attrValue,
+TidyNode findNodeByAttr(TidyDoc tdoc, absl::string_view name,
+                        TidyAttrId attrId, absl::string_view attrValue,
                         TidyNode prevNode) {
   auto node = findNode(tdoc, name, prevNode);
   while (node != nullptr) {
@@ -46,7 +46,7 @@ TidyNode findNodeByAttr(TidyDoc tdoc, const std::string& name,
     if (value != nullptr) {
       //std::cout << "nodeAttr: " << tidyAttrValue(value) << std::endl;
       auto valueValue = tidyAttrValue(value);
-      if (strncasecmp(valueValue, attrValue.c_str(), strlen(valueValue)) == 0) {
+      if (strncasecmp(valueValue, attrValue.data(), strlen(valueValue)) == 0) {
         return node;
       }
     }
@@ -55,8 +55,8 @@ TidyNode findNodeByAttr(TidyDoc tdoc, const std::string& name,
   return nullptr;
 }
 
-TidyNode findNodeByContent(TidyDoc tdoc, const std::string& name,
-                           const std::string& content, TidyNode prevNode) {
+TidyNode findNodeByContent(TidyDoc tdoc, absl::string_view name,
+                           absl::string_view content, TidyNode prevNode) {
   auto node = findNode(tdoc, name, prevNode);
   while (node != nullptr) {
     //std::cout << "tidyNodeGetType(node): " << tidyNodeGetType(node) << std::endl;
@@ -69,7 +69,7 @@ TidyNode findNodeByContent(TidyDoc tdoc, const std::string& name,
       } else {
         //std::cout << "tbuf.bp: " << tbuf.bp;
         if (content.length() <= tbuf.size &&
-            strncmp(content.c_str(), reinterpret_cast<char *>(tbuf.bp), content.length()) == 0) {
+            strncmp(content.data(), reinterpret_cast<char *>(tbuf.bp), content.length()) == 0) {
           if (prevNode == nullptr) {
             return child;
           }

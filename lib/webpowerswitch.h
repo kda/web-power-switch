@@ -17,13 +17,13 @@ class Outlet {
 public:
   Outlet() {
   }
-  Outlet(int id, std::string name, OutletState state)
+  Outlet(int id, absl::string_view name, OutletState state)
   : id_(id), name_(name), state_(state) {
   }
   int id() const {
     return id_;
   }
-  std::string name() const {
+  absl::string_view name() const {
     return name_;
   }
   OutletState state() const {
@@ -54,8 +54,8 @@ public:
   void suppressDetectionErrors() {
     suppressDetectionErrors_ = true;
   }
-  bool login(std::string username, std::string password);
-  CURL* startLogin(std::string username, std::string password);
+  bool login(absl::string_view username, absl::string_view password);
+  CURL* startLogin(absl::string_view username, absl::string_view password);
   CURL* next();
   void logout();
   bool isLoggedIn() const {
@@ -68,7 +68,7 @@ public:
   CURL* handle() {
     return request_;
   }
-  std::string name() const {
+  absl::string_view name() const {
     if (loggedIn_ == false) {
       return "===not_logged_in===";
     }
@@ -77,10 +77,10 @@ public:
   const std::vector<Outlet>& outlets() const {
     return outlets_;
   }
-  Outlet* getOutlet(std::string name);
-  bool on(std::string outletName);
-  bool off(std::string outletName);
-  bool toggle(std::string outletName);
+  Outlet* getOutlet(absl::string_view name);
+  bool on(absl::string_view outletName);
+  bool off(absl::string_view outletName);
+  bool toggle(absl::string_view outletName);
   void verbose(int increment = 1) {
     verbose_ += increment;
   }

@@ -112,7 +112,7 @@ WebPowerSwitch::~WebPowerSwitch() {
   logout();
 }
 
-bool WebPowerSwitch::login(std::string username, std::string password) {
+bool WebPowerSwitch::login(absl::string_view username, absl::string_view password) {
   // first page
   auto request = startLogin(username, password);
   while (request != nullptr && curl_easy_perform(request) == CURLE_OK) {
@@ -121,7 +121,7 @@ bool WebPowerSwitch::login(std::string username, std::string password) {
   return isLoggedIn();
 }
 
-CURL* WebPowerSwitch::startLogin(std::string username, std::string password) {
+CURL* WebPowerSwitch::startLogin(absl::string_view username, absl::string_view password) {
   if (loggedIn_) {
     return nullptr;
   }
@@ -471,7 +471,7 @@ void WebPowerSwitch::dumpOutlets(std::ostream& ostr) {
   }
 }
 
-Outlet* WebPowerSwitch::getOutlet(std::string name) {
+Outlet* WebPowerSwitch::getOutlet(absl::string_view name) {
   for (auto outletIter = outlets_.begin(); outletIter != outlets_.end(); outletIter++) {
     if (outletIter->name() == name) {
       return &(*outletIter);
@@ -480,7 +480,7 @@ Outlet* WebPowerSwitch::getOutlet(std::string name) {
   return nullptr;
 }
 
-bool WebPowerSwitch::on(std::string outletName) {
+bool WebPowerSwitch::on(absl::string_view outletName) {
   auto ol = getOutlet(outletName);
   if (ol->state() == OUTLET_STATE_ON) {
     return true;
@@ -488,7 +488,7 @@ bool WebPowerSwitch::on(std::string outletName) {
   return setState(ol, OUTLET_STATE_ON);
 }
 
-bool WebPowerSwitch::off(std::string outletName) {
+bool WebPowerSwitch::off(absl::string_view outletName) {
   auto ol = getOutlet(outletName);
   if (ol->state() == OUTLET_STATE_OFF) {
     return true;
@@ -496,7 +496,7 @@ bool WebPowerSwitch::off(std::string outletName) {
   return setState(ol, OUTLET_STATE_OFF);
 }
 
-bool WebPowerSwitch::toggle(std::string outletName) {
+bool WebPowerSwitch::toggle(absl::string_view outletName) {
   auto ol = getOutlet(outletName);
   return setState(ol, ol->state() == OUTLET_STATE_ON ? OUTLET_STATE_OFF : OUTLET_STATE_ON);
 }
