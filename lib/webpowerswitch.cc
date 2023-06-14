@@ -145,9 +145,7 @@ CURL* WebPowerSwitch::startLogin(absl::string_view username, absl::string_view p
   // Fetch
   initializeRequest();
 
-  //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host()).c_str());
   curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host()).c_str());
-  //curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
   curl_easy_setopt(request_, CURLOPT_TIMEOUT, CURL_TIMEOUT);
   if (verbose_ > 2) {
     curl_easy_setopt(request_, CURLOPT_VERBOSE, 1L);
@@ -182,7 +180,6 @@ CURL* WebPowerSwitch::next() {
       std::cerr << "errbuf: " << errbuf.bp << std::endl;
       return nullptr;
     }
-    //std::cout << "os_: " << os_.str() << std::endl;
     result = tidyParseString(tdw, os_.str().c_str());
     if (result > 1) {
       std::cerr << "(initial page) failed to parse: " << result << std::endl;
@@ -198,14 +195,12 @@ CURL* WebPowerSwitch::next() {
       }
       return nullptr;
     }
-    //std::cout << "name: " << tidyNodeGetName(inputNode) << std::endl;
     auto value = tidyAttrGetById(inputNode, TidyAttr_VALUE);
     if (value == nullptr) {
       std::cerr << "failed to find challenge value" << std::endl;
       return nullptr;
     }
     std::string challenge = tidyAttrValue(value);
-    //std::cout << "challenge: " << challenge << std::endl;
 
     // determine form action
     TidyNode formNode = tidyHelper::findNodeByAttr(tdw, "form", TidyAttr_NAME, "login", nullptr);
@@ -219,7 +214,6 @@ CURL* WebPowerSwitch::next() {
       return nullptr;
     }
     std::string action = tidyAttrValue(value);
-    //std::cout << "action: " << action << std::endl;
 
     // create password
     auto passphrase = challenge + username_ + password_ + challenge;
@@ -231,14 +225,12 @@ CURL* WebPowerSwitch::next() {
     for (unsigned char uc : md5digest) {
       osDigest << std::setfill('0') << std::setw(2) << std::hex << (int)uc;
     }
-    //std::cout << "md5digest: " << osDigest.str() << std::endl;
     std::unordered_map<std::string, std::string> postFields;
     postFields["Username"] = username_;
     postFields["Password"] = osDigest.str();
 
     initializeRequest();
 
-    //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() + action).c_str());
     curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host(), action).c_str());
     curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
     curl_easy_setopt(request_, CURLOPT_COOKIEFILE, "");
@@ -250,18 +242,14 @@ CURL* WebPowerSwitch::next() {
     curl_easy_setopt(request_, CURLOPT_FOLLOWLOCATION, 1L);
 
     auto postData = generatePostData(postFields);
-    //std::cout << "postData: " << postData << std::endl;
-    //std::cout << "postData.length(): " << postData.length() << std::endl;
     curl_easy_setopt(request_, CURLOPT_COPYPOSTFIELDS, postData.c_str());
     state_ = STATE_LOGIN_REQUESTED;
-		//usleep(1000000);
     }
     return request_;
   case STATE_LOGIN_REQUESTED:
     dumpCookies();
     long responseCode;
     curl_easy_getinfo(request_, CURLINFO_RESPONSE_CODE, &responseCode);
-    //std::cout << "host(): " << host() << " responseCode: " << responseCode << std::endl;
     clearRequest();
     if (responseCode == 200) {
       loggedIn_ = true;
@@ -279,8 +267,6 @@ CURL* WebPowerSwitch::next() {
     {
     dumpCookies();
     clearRequest();
-    //std::cout << "host(): " << host() << std::endl;
-    //std::cout << "os_: " << os_.str() << std::endl;
 
     TidyDocWrapper tdw;
     TidyBuffer errbuf = {};
@@ -304,11 +290,6 @@ CURL* WebPowerSwitch::next() {
     }
     TidyBuffer tbuf = {};
     tidyNodeGetText(tdw, node, &tbuf);
-    //if (tidyNodeGetText(tdw, node, &tbuf) == false) {
-      //std::cerr << "tidyNodeGetText failed (" << host() << "). errbuf: " << errbuf.bp << std::endl;
-    //  std::cerr << "tidyNodeGetText failed (" << host() << "): " << tbuf.bp << std::endl;
-    //  return;
-    //}
     if (tbuf.bp == nullptr) {
       std::cerr << "tidyNodeGetText failed (" << host() << ") tbuf.bp == nullptr" << std::endl;
       return nullptr;
@@ -334,7 +315,6 @@ CURL* WebPowerSwitch::next() {
       auto name = tidyGetChild(td);
       tidyBufClear(&tbuf);
       tidyNodeGetText(tdw, name, &tbuf);
-      //ostr << "name: " << tbuf.bp;
       std::string outletName = reinterpret_cast<char *>(tbuf.bp);
       outletName = trim(outletName);
 
@@ -351,7 +331,6 @@ CURL* WebPowerSwitch::next() {
       }
       tidyBufClear(&tbuf);
       tidyNodeGetText(tdw, state, &tbuf);
-      //ostr << "state: " << tbuf.bp;
       OutletState outletState = OUTLET_STATE_UNKNOWN;
       if (strncmp("ON", reinterpret_cast<char *>(tbuf.bp), 2) == 0) {
         outletState = OUTLET_STATE_ON;
@@ -430,9 +409,7 @@ void WebPowerSwitch::prepToFetchOutlets() {
   outlets_.clear();
 
   initializeRequest();
-  //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() +  "/index.htm").c_str());
   curl_easy_setopt(request_, CURLOPT_URL, absl::StrCat(prefix_, host(),  "/index.htm").c_str());
-  //curl_easy_setopt(request_, CURLOPT_URL, (prefix_ + host() + "/").c_str());
   curl_easy_setopt(request_, CURLOPT_HEADER, 1L);
   curl_easy_setopt(request_, CURLOPT_COOKIEFILE, "");
   curl_easy_setopt(request_, CURLOPT_SHARE, share_);

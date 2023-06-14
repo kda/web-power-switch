@@ -137,10 +137,7 @@ void WebPowerSwitchManager::dumpSwitches(std::ostream& ostr) {
     return;
   }
   auto cbnCache = cache_[CACHE_KEY_CONTROLLERBYNAME];
-  //std::cout << "cbnCache: " << cbnCache << std::endl;
   for (auto controller : cbnCache) {
-    //std::cout << "controller: " << controller.first.as<std::string>() << std::endl;
-    //std::cout << "host: " << cbnCache[controller.first][CACHE_CONTROLLERBYNAME_KEY_HOST].as<std::string>() << std::endl;
     auto wps = getSwitch(controller.first.as<std::string>());
     if (wps != nullptr) {
       wps->dumpOutlets(ostr);
@@ -157,8 +154,6 @@ bool WebPowerSwitchManager::validateCacheFile() {
   if (tmpdir == nullptr) {
     tmpdir = "/tmp";
   }
-  //std::cout << "tmpdir: " << tmpdir << std::endl;
-  //std::string cacheDirectory = "/var/cache/webpowerswitchcontrol/";
   std::string cacheDirectory = absl::StrCat(tmpdir, "/webpowerswitchcontrol/");
   DIR* dir = opendir(cacheDirectory.c_str());
   if (dir == nullptr) {
@@ -234,7 +229,6 @@ void WebPowerSwitchManager::loadCache() {
     ss << std::string(buffer, readsize);
   }
   close(fd);
-  //std::cout << "ss.str(): " << ss.str() << std::endl;
 
   try {
     cache_ = YAML::Load(ss.str());
@@ -348,7 +342,6 @@ void WebPowerSwitchManager::findSwitches() {
             }
             curl_multi_remove_handle(multi_handle, wps->handle());
             if (msg->data.result == CURLE_OK) {
-              //std::cout << "looking good: " << wps->host() << std::endl;
               CURL* request = wps->next();
               if (request != nullptr) {
                 curl_multi_add_handle(multi_handle, request);

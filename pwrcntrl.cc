@@ -90,7 +90,6 @@ int main(int iArgc, char* szArgv[]) {
   // Add credentials
   if (optionsResult.count("credentials") != 0) {
     for (const auto& credential : optionsResult["credentials"].as<std::vector<std::string>>()) {
-      //std::cout << "credential: " << credential << std::endl;
       auto separator = credential.find(":");
       if (separator == std::string::npos) {
         std::cerr << "Invalid credential missing separator ':' (" << credential << ")" << std::endl;
@@ -98,7 +97,6 @@ int main(int iArgc, char* szArgv[]) {
       }
       auto username = credential.substr(0, separator);
       auto password = credential.substr(separator + 1);
-      //std::cout << "username: " << username << " password: " << password << std::endl;
       if (!wpsm->addUsernamePassword(username, password)) {
         std::cerr << "Failed to add username (" << username << ") and password (" << password << ")." << std::endl;
         return -1;
