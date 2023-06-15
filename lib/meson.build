@@ -40,6 +40,6 @@ wps_lib = static_library(
 wps_dep = declare_dependency(
     link_with : wps_lib,
     include_directories : include_directories('.'),
-    dependencies : wps_dependencies,
+    dependencies : [absl_strings_dep],
   )
 
