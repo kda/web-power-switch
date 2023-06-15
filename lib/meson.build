@@ -22,22 +22,24 @@ libcurl_dep = dependency('libcurl')
 tidy_dep = dependency('tidy')
 yamlcpp_dep = dependency('yaml-cpp')
 
+wps_dependencies = [
+  absl_strings_dep,
+  libcrypto_dep,
+  libcurl_dep,
+  tidy_dep,
+  yamlcpp_dep,
+  ]
+
 wps_lib = static_library(
     'wps',
     wps_sources,
     include_directories : [abseil_inc],
-    dependencies : [
-        absl_strings_dep,
-        libcrypto_dep,
-        libcurl_dep,
-        tidy_dep,
-        yamlcpp_dep,
-      ],
+    dependencies : wps_dependencies,
     )
 
 wps_dep = declare_dependency(
     link_with : wps_lib,
     include_directories : include_directories('.'),
-    dependencies : [ absl_strings_dep ],
+    dependencies : wps_dependencies,
   )
 
