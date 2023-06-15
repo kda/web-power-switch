@@ -12,4 +12,7 @@ Build
   - meson setup build
   - ninja -C build
 
-Mostly works on ubuntu and raspios.
+Clean
+  - Run the clean.sh script to expunge build and subprojects.
+
+Tested on ubuntu (23.04-Lunar Lobster) and raspios (11-bullseye).
