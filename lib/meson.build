@@ -19,8 +19,8 @@ endif
 
 libcrypto_dep = dependency('libcrypto')
 libcurl_dep = dependency('libcurl')
-tidy_dep = dependency('tidy')
-yamlcpp_dep = dependency('yaml-cpp')
+tidy_dep = dependency('tidy', static: true)
+yamlcpp_dep = dependency('yaml-cpp', static: true)
 
 wps_dependencies = [
   absl_strings_dep,
@@ -30,7 +30,7 @@ wps_dependencies = [
   yamlcpp_dep,
   ]
 
-wps_lib = static_library(
+wps_lib = library(
     'wps',
     wps_sources,
     include_directories : [abseil_inc],

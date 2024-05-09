@@ -4,6 +4,7 @@ project('web-power-switch', 'cpp',
   default_options : [
     'warning_level=3',
     'cpp_std=c++14',
+    'default_library=static',
     ])
 
 cxxopts_dep = dependency('cxxopts', version : '>=3.0.0', fallback : ['cxxopts', 'cxxopts_dep'])
