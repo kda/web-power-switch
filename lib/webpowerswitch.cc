@@ -214,6 +214,9 @@ CURL* WebPowerSwitch::next() {
       return nullptr;
     }
     std::string action = tidyAttrValue(value);
+    if (action[0] != '/') {
+      action = '/' + action;
+    }
 
     // create password
     auto passphrase = challenge + username_ + password_ + challenge;
