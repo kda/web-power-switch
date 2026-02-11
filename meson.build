@@ -3,11 +3,11 @@ project('web-power-switch', 'cpp',
   meson_version : '>=0.65.0',
   default_options : [
     'warning_level=3',
-    'cpp_std=c++14',
+    'cpp_std=c++23',
     'default_library=static',
     ])
 
-cxxopts_dep = dependency('cxxopts', version : '>=3.0.0', fallback : ['cxxopts', 'cxxopts_dep'])
+cxxopts_dep = dependency('cxxopts', version : '>=3.2.0', fallback : ['cxxopts', 'cxxopts_dep'])
 
 subdir('lib')
 
